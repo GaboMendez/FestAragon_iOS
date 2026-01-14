@@ -23,6 +23,12 @@ struct MapsView: View {
                 Text("Explore event locations")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                
+                Text("WORK IN PROGRESS")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.secondary)
+                
             }
             .navigationTitle("Maps")
         }
