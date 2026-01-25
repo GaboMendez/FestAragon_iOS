@@ -1,10 +1,3 @@
-//
-//  HomeViewModel.swift
-//  FestAragon
-//
-//  Created by Gabriel Mendez Reyes on 14/1/26.
-//
-
 import Foundation
 import Combine
 
@@ -149,7 +142,13 @@ class HomeViewModel: ObservableObject {
         }
     }
     
+    /// Alterna el estado de favorito de un evento
+    /// Usa FavoritesManager para persistir el cambio automáticamente
     func toggleFavorite(event: Event) {
+        // Alternar en FavoritesManager (persiste en UserDefaults)
+        FavoritesManager.shared.toggleFavorite(eventId: event.jsonId)
+        
+        // Actualizar en el array local
         if let index = events.firstIndex(where: { $0.id == event.id }) {
             events[index].isFavorite.toggle()
             filterEvents()

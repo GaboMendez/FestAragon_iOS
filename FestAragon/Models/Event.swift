@@ -1,14 +1,8 @@
-//
-//  Event.swift
-//  FestAragon
-//
-//  Created by Gabriel Mendez Reyes on 14/1/26.
-//
-
 import Foundation
 
 struct Event: Identifiable, Codable {
     let id: UUID
+    let jsonId: String
     let title: String
     let description: String
     let date: Date
@@ -21,6 +15,7 @@ struct Event: Identifiable, Codable {
     
     init(
         id: UUID = UUID(),
+        jsonId: String = "",
         title: String,
         description: String,
         date: Date,
@@ -32,6 +27,7 @@ struct Event: Identifiable, Codable {
         isFavorite: Bool = false
     ) {
         self.id = id
+        self.jsonId = jsonId
         self.title = title
         self.description = description
         self.date = date

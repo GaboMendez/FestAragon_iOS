@@ -1,10 +1,3 @@
-//
-//  MapsView.swift
-//  FestAragon
-//
-//  Created by Gabriel Mendez Reyes on 14/1/26.
-//
-
 import SwiftUI
 
 struct MapsView: View {

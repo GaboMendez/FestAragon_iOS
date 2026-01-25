@@ -1,10 +1,3 @@
-//
-//  HomeView.swift
-//  FestAragon
-//
-//  Created by Gabriel Mendez Reyes on 14/1/26.
-//
-
 import SwiftUI
 
 struct HomeView: View {
@@ -28,6 +21,7 @@ struct HomeView: View {
                             .tint(.black)
                     }
                     .padding(.horizontal)
+                    .padding(.top, 16)
                     .animation(.easeInOut, value: viewModel.showPastEvents)
                     
                     // Barra de búsqueda

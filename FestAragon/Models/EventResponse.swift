@@ -1,10 +1,3 @@
-//
-//  EventResponse.swift
-//  FestAragon
-//
-//  Created by Gabriel Mendez Reyes on 14/1/26.
-//
-
 import Foundation
 
 // MARK: - Respuesta completa del JSON
@@ -137,8 +130,12 @@ extension EventoJSON {
         let demoDate = Calendar.current.date(from: components) ?? Date()
         let isPast = eventDate < demoDate
         
+        // Verificar si está en favoritos
+        let isFavorite = FavoritesManager.shared.isFavorite(eventId: id)
+        
         return Event(
             id: UUID(),
+            jsonId: id,
             title: titulo,
             description: descripcion,
             date: eventDate,
@@ -147,7 +144,7 @@ extension EventoJSON {
             imageURL: multimedia.first?.recurso,
             price: 0.0,
             isPast: isPast,
-            isFavorite: false
+            isFavorite: isFavorite
         )
     }
 }
