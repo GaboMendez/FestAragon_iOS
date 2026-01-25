@@ -1,0 +1,930 @@
+{
+  "meta": {
+    "version": "1.0",
+    "timezone": "Europe/Madrid",
+    "ultimaActualizacion": "2026-01-07T10:00:00Z"
+  },
+  "pueblo": {
+    "nombre": "Zaragoza",
+    "provincia": "Zaragoza",
+    "comunidad": "Aragón",
+    "coordenadas": {
+      "lat": 41.6488,
+      "lng": -0.8891
+    },
+    "fechasFiestas": {
+      "inicio": "2026-01-06",
+      "fin": "2026-01-31"
+    }
+  },
+  "categorias": [
+    {
+      "id": "musica",
+      "nombre": "Música",
+      "icono": "ic_music"
+    },
+    {
+      "id": "cultural",
+      "nombre": "Cultural",
+      "icono": "ic_culture"
+    },
+    {
+      "id": "infantil",
+      "nombre": "Infantil",
+      "icono": "ic_children"
+    },
+    {
+      "id": "tradicional",
+      "nombre": "Tradicional",
+      "icono": "ic_traditional"
+    }
+  ],
+  "organizadores": [
+    {
+      "id": "ayuntamiento",
+      "nombre": "Ayuntamiento de Zaragoza",
+      "contacto": "info@zaragoza.es"
+    },
+    {
+      "id": "teatro_principal",
+      "nombre": "Teatro Principal",
+      "contacto": "info@teatroprincipalzaragoza.com"
+    },
+    {
+      "id": "auditorio",
+      "nombre": "Auditorio de Zaragoza",
+      "contacto": "info@auditoriozaragoza.com"
+    },
+    {
+      "id": "caixaforum",
+      "nombre": "CaixaForum Zaragoza",
+      "contacto": "info@caixaforum.es"
+    }
+  ],
+  "eventos": [
+    {
+      "id": "evt_001",
+      "titulo": "Cabalgata de Reyes Magos",
+      "descripcion": "Tradicional cabalgata de los Reyes Magos de Oriente por las calles del centro de Zaragoza.",
+      "categoriaId": "tradicional",
+      "organizadorId": "ayuntamiento",
+      "inicio": "2026-01-05T18:00:00",
+      "fin": "2026-01-05T21:00:00",
+      "lugar": {
+        "nombre": "Plaza del Pilar",
+        "direccion": "Plaza del Pilar, s/n",
+        "coordenadas": {
+          "lat": 41.6561,
+          "lng": -0.8779
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-544273677-c433136021a4"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1512389142860-9c449e58a543"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1482575832494-771f74bf6857"
+        }
+      ],
+      "tags": [
+        "reyes magos",
+        "cabalgata",
+        "tradicional"
+      ]
+    },
+    {
+      "id": "evt_002",
+      "titulo": "Concierto de Año Nuevo",
+      "descripcion": "Concierto extraordinario de la Orquesta Sinfónica de Aragón para celebrar el nuevo año.",
+      "categoriaId": "musica",
+      "organizadorId": "auditorio",
+      "inicio": "2026-01-06T20:00:00",
+      "fin": "2026-01-06T22:00:00",
+      "lugar": {
+        "nombre": "Auditorio de Zaragoza",
+        "direccion": "Eduardo Ibarra, 3",
+        "coordenadas": {
+          "lat": 41.6436,
+          "lng": -0.8926
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1465847899084-d164df4dedc6"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1519683109079-d5f539e1542f"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64"
+        }
+      ],
+      "tags": [
+        "musica",
+        "orquesta",
+        "concierto"
+      ]
+    },
+    {
+      "id": "evt_003",
+      "titulo": "Exposición Goya",
+      "descripcion": "Muestra de obras maestras de Francisco de Goya en el museo que lleva su nombre.",
+      "categoriaId": "cultural",
+      "organizadorId": "ayuntamiento",
+      "inicio": "2026-01-07T10:00:00",
+      "fin": "2026-01-07T20:00:00",
+      "lugar": {
+        "nombre": "Museo Goya - Colección Ibercaja",
+        "direccion": "Calle Espoz y Mina, 23",
+        "coordenadas": {
+          "lat": 41.6531,
+          "lng": -0.8784
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1544967082-d9d25d867d66"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1580060839134-75a5edca2e99"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1561214115-f2f134cc4912"
+        }
+      ],
+      "tags": [
+        "goya",
+        "arte",
+        "museo"
+      ]
+    },
+    {
+      "id": "evt_004",
+      "titulo": "Teatro Infantil: El Principito",
+      "descripcion": "Adaptación teatral del clásico de Saint-Exupéry para toda la familia.",
+      "categoriaId": "infantil",
+      "organizadorId": "teatro_principal",
+      "inicio": "2026-01-08T18:00:00",
+      "fin": "2026-01-08T19:30:00",
+      "lugar": {
+        "nombre": "Teatro Principal",
+        "direccion": "Calle Fernando el Católico, 28",
+        "coordenadas": {
+          "lat": 41.6538,
+          "lng": -0.8763
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1503095396549-807759245b35"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1478147427282-58a87a120781"
+        }
+      ],
+      "tags": [
+        "teatro",
+        "niños",
+        "familia"
+      ]
+    },
+    {
+      "id": "evt_005",
+      "titulo": "Mercado Medieval",
+      "descripcion": "Mercado tradicional con artesanía, gastronomía y espectáculos de época.",
+      "categoriaId": "tradicional",
+      "organizadorId": "ayuntamiento",
+      "inicio": "2026-01-10T11:00:00",
+      "fin": "2026-01-10T20:00:00",
+      "lugar": {
+        "nombre": "Plaza del Pilar",
+        "direccion": "Plaza del Pilar, s/n",
+        "coordenadas": {
+          "lat": 41.6561,
+          "lng": -0.8779
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1555939594-58d7cb561ad1"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1504674900247-0877df9cc836"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1533900298318-6b8da08a523e"
+        }
+      ],
+      "tags": [
+        "mercado",
+        "medieval",
+        "artesania"
+      ]
+    },
+    {
+      "id": "evt_006",
+      "titulo": "Concierto de Jazz en La Lata de Bombillas",
+      "descripcion": "Noche de jazz en directo con artistas locales e internacionales.",
+      "categoriaId": "musica",
+      "organizadorId": "ayuntamiento",
+      "inicio": "2026-01-11T21:00:00",
+      "fin": "2026-01-11T23:30:00",
+      "lugar": {
+        "nombre": "Sala La Lata de Bombillas",
+        "direccion": "Calle Cadena, 5",
+        "coordenadas": {
+          "lat": 41.6542,
+          "lng": -0.8771
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1511192336575-5a79af67a629"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1514525253161-7a46d19cd819"
+        }
+      ],
+      "tags": [
+        "jazz",
+        "musica",
+        "concierto"
+      ]
+    },
+    {
+      "id": "evt_007",
+      "titulo": "Taller de Robótica para Niños",
+      "descripcion": "Aprende los fundamentos de la robótica y la programación de forma divertida.",
+      "categoriaId": "infantil",
+      "organizadorId": "caixaforum",
+      "inicio": "2026-01-12T11:00:00",
+      "fin": "2026-01-12T13:00:00",
+      "lugar": {
+        "nombre": "CaixaForum Zaragoza",
+        "direccion": "Calle José Anselmo Clavé, 4-10",
+        "coordenadas": {
+          "lat": 41.6492,
+          "lng": -0.8784
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1485827404703-89b55fcc595e"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1518314916381-77a37c2a49ae"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb"
+        }
+      ],
+      "tags": [
+        "robotica",
+        "niños",
+        "tecnologia"
+      ]
+    },
+    {
+      "id": "evt_008",
+      "titulo": "Exposición Pablo Gargallo",
+      "descripcion": "Colección permanente del escultor aragonés Pablo Gargallo.",
+      "categoriaId": "cultural",
+      "organizadorId": "ayuntamiento",
+      "inicio": "2026-01-13T10:00:00",
+      "fin": "2026-01-13T20:00:00",
+      "lugar": {
+        "nombre": "Museo Pablo Gargallo",
+        "direccion": "Plaza San Felipe, 3",
+        "coordenadas": {
+          "lat": 41.6549,
+          "lng": -0.8792
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1577083552431-6e5fd01988ec"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1578926078792-f5d7bbb9c530"
+        }
+      ],
+      "tags": [
+        "escultura",
+        "arte",
+        "gargallo"
+      ]
+    },
+    {
+      "id": "evt_009",
+      "titulo": "Visita Guiada a la Aljafería",
+      "descripcion": "Recorrido histórico por el Palacio de la Aljafería, joya del arte islámico.",
+      "categoriaId": "cultural",
+      "organizadorId": "ayuntamiento",
+      "inicio": "2026-01-14T10:00:00",
+      "fin": "2026-01-14T12:00:00",
+      "lugar": {
+        "nombre": "Palacio de la Aljafería",
+        "direccion": "Calle de los Diputados, s/n",
+        "coordenadas": {
+          "lat": 41.6566,
+          "lng": -0.8972
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1599741233055-ef8563bd5b5f"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1555854877-bab0e564b8d5"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1568392334889-f6f6c7ed5c2f"
+        }
+      ],
+      "tags": [
+        "historia",
+        "palacio",
+        "cultura"
+      ]
+    },
+    {
+      "id": "evt_010",
+      "titulo": "Concierto de Rock en Sala Multiusos",
+      "descripcion": "Bandas locales de rock en una noche memorable.",
+      "categoriaId": "musica",
+      "organizadorId": "ayuntamiento",
+      "inicio": "2026-01-15T21:30:00",
+      "fin": "2026-01-16T01:00:00",
+      "lugar": {
+        "nombre": "Sala Multiusos del Auditorio",
+        "direccion": "Eduardo Ibarra, 3",
+        "coordenadas": {
+          "lat": 41.6436,
+          "lng": -0.8926
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec"
+        }
+      ],
+      "tags": [
+        "rock",
+        "musica",
+        "concierto"
+      ]
+    },
+    {
+      "id": "evt_011",
+      "titulo": "Festival de Magia",
+      "descripcion": "Espectáculo de magia con los mejores ilusionistas del país.",
+      "categoriaId": "infantil",
+      "organizadorId": "teatro_principal",
+      "inicio": "2026-01-17T18:00:00",
+      "fin": "2026-01-17T20:00:00",
+      "lugar": {
+        "nombre": "Teatro Principal",
+        "direccion": "Calle Fernando el Católico, 28",
+        "coordenadas": {
+          "lat": 41.6538,
+          "lng": -0.8763
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1526398977052-654221a252b1"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1534447677768-be436bb09401"
+        }
+      ],
+      "tags": [
+        "magia",
+        "familia",
+        "espectaculo"
+      ]
+    },
+    {
+      "id": "evt_012",
+      "titulo": "Feria de Artesanía Aragonesa",
+      "descripcion": "Productos artesanales y tradicionales de Aragón.",
+      "categoriaId": "tradicional",
+      "organizadorId": "ayuntamiento",
+      "inicio": "2026-01-18T10:00:00",
+      "fin": "2026-01-18T20:00:00",
+      "lugar": {
+        "nombre": "La Lonja",
+        "direccion": "Plaza del Pilar, s/n",
+        "coordenadas": {
+          "lat": 41.6553,
+          "lng": -0.8784
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1489769002049-ccd828976a6c"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1473163928189-364b2c4e1135"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1528698827591-e19ccd7bc23d"
+        }
+      ],
+      "tags": [
+        "artesania",
+        "aragon",
+        "tradicional"
+      ]
+    },
+    {
+      "id": "evt_013",
+      "titulo": "Ciclo de Cine Clásico",
+      "descripcion": "Proyección de películas clásicas del cine español en pantalla grande.",
+      "categoriaId": "cultural",
+      "organizadorId": "caixaforum",
+      "inicio": "2026-01-19T19:00:00",
+      "fin": "2026-01-19T21:30:00",
+      "lugar": {
+        "nombre": "CaixaForum Zaragoza",
+        "direccion": "Calle José Anselmo Clavé, 4-10",
+        "coordenadas": {
+          "lat": 41.6492,
+          "lng": -0.8784
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1440404653325-ab127d49abc1"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1594908900066-3f47337549d8"
+        }
+      ],
+      "tags": [
+        "cine",
+        "clasico",
+        "cultura"
+      ]
+    },
+    {
+      "id": "evt_014",
+      "titulo": "Taller de Pintura para Niños",
+      "descripcion": "Los más pequeños aprenden técnicas de pintura de forma divertida.",
+      "categoriaId": "infantil",
+      "organizadorId": "ayuntamiento",
+      "inicio": "2026-01-20T17:00:00",
+      "fin": "2026-01-20T19:00:00",
+      "lugar": {
+        "nombre": "Centro Cívico Universidad",
+        "direccion": "Calle Violante de Hungría, 4",
+        "coordenadas": {
+          "lat": 41.6485,
+          "lng": -0.8856
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1513364776144-60967b0f800f"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1455275443537-7b061b113b97"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1452860606245-08befc0ff44b"
+        }
+      ],
+      "tags": [
+        "pintura",
+        "niños",
+        "taller"
+      ]
+    },
+    {
+      "id": "evt_015",
+      "titulo": "Concierto de Música Clásica",
+      "descripcion": "Recital de piano con obras de Chopin y Beethoven.",
+      "categoriaId": "musica",
+      "organizadorId": "auditorio",
+      "inicio": "2026-01-21T20:00:00",
+      "fin": "2026-01-21T22:00:00",
+      "lugar": {
+        "nombre": "Auditorio de Zaragoza",
+        "direccion": "Eduardo Ibarra, 3",
+        "coordenadas": {
+          "lat": 41.6436,
+          "lng": -0.8926
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1510915228340-29c85a43dcfe"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d"
+        }
+      ],
+      "tags": [
+        "clasica",
+        "piano",
+        "concierto"
+      ]
+    },
+    {
+      "id": "evt_016",
+      "titulo": "Ruta de Tapas por el Tubo",
+      "descripcion": "Descubre los mejores bares y tapas del barrio más emblemático de Zaragoza.",
+      "categoriaId": "tradicional",
+      "organizadorId": "ayuntamiento",
+      "inicio": "2026-01-22T13:00:00",
+      "fin": "2026-01-22T16:00:00",
+      "lugar": {
+        "nombre": "El Tubo",
+        "direccion": "Calle Estebanes, 6",
+        "coordenadas": {
+          "lat": 41.6548,
+          "lng": -0.8782
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1515443961218-a51367888e4b"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1414235077428-338989a2e8c0"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1550547660-d9450f859349"
+        }
+      ],
+      "tags": [
+        "gastronomia",
+        "tapas",
+        "tubo"
+      ]
+    },
+    {
+      "id": "evt_017",
+      "titulo": "Stand Up Comedy",
+      "descripcion": "Noche de comedia con los mejores monologuistas del panorama nacional.",
+      "categoriaId": "cultural",
+      "organizadorId": "teatro_principal",
+      "inicio": "2026-01-23T21:00:00",
+      "fin": "2026-01-23T23:00:00",
+      "lugar": {
+        "nombre": "Teatro de las Esquinas",
+        "direccion": "Calle Vía Hispanidad, 20",
+        "coordenadas": {
+          "lat": 41.6383,
+          "lng": -0.9147
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1585699324551-f6c309eedeca"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1543269865-cbf427effbad"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1527224857830-43a7acc85260"
+        }
+      ],
+      "tags": [
+        "comedia",
+        "humor",
+        "monologos"
+      ]
+    },
+    {
+      "id": "evt_018",
+      "titulo": "Circo Familiar",
+      "descripcion": "Espectáculo de circo con acróbatas, malabaristas y payasos.",
+      "categoriaId": "infantil",
+      "organizadorId": "ayuntamiento",
+      "inicio": "2026-01-24T18:00:00",
+      "fin": "2026-01-24T20:00:00",
+      "lugar": {
+        "nombre": "Pabellón Príncipe Felipe",
+        "direccion": "Calle Eduardo Ibarra, s/n",
+        "coordenadas": {
+          "lat": 41.6447,
+          "lng": -0.8935
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1543466835-00a7907e9de1"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1522057384400-681b421cfebc"
+        }
+      ],
+      "tags": [
+        "circo",
+        "familia",
+        "espectaculo"
+      ]
+    },
+    {
+      "id": "evt_019",
+      "titulo": "Festival de Flamenco",
+      "descripcion": "Noche flamenca con bailaores y cantaores de renombre.",
+      "categoriaId": "musica",
+      "organizadorId": "teatro_principal",
+      "inicio": "2026-01-25T21:00:00",
+      "fin": "2026-01-25T23:30:00",
+      "lugar": {
+        "nombre": "Teatro Principal",
+        "direccion": "Calle Fernando el Católico, 28",
+        "coordenadas": {
+          "lat": 41.6538,
+          "lng": -0.8763
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1504609773096-104ff2c73ba4"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1515023115689-589c33041d3c"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1545224144-b38cd309ef69"
+        }
+      ],
+      "tags": [
+        "flamenco",
+        "musica",
+        "baile"
+      ]
+    },
+    {
+      "id": "evt_020",
+      "titulo": "Exposición de Arte Contemporáneo",
+      "descripcion": "Muestra de artistas contemporáneos aragoneses.",
+      "categoriaId": "cultural",
+      "organizadorId": "ayuntamiento",
+      "inicio": "2026-01-26T10:00:00",
+      "fin": "2026-01-26T20:00:00",
+      "lugar": {
+        "nombre": "IAACC Pablo Serrano",
+        "direccion": "Paseo María Agustín, 20",
+        "coordenadas": {
+          "lat": 41.6508,
+          "lng": -0.8892
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1536924940846-227afb31e2a5"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1551191916-2a0f455e1f20"
+        }
+      ],
+      "tags": [
+        "arte",
+        "contemporaneo",
+        "exposicion"
+      ]
+    },
+    {
+      "id": "evt_021",
+      "titulo": "Concierto de Rock Sinfónico",
+      "descripcion": "La Orquesta Sinfónica interpreta grandes clásicos del rock.",
+      "categoriaId": "musica",
+      "organizadorId": "auditorio",
+      "inicio": "2026-01-28T20:30:00",
+      "fin": "2026-01-28T22:30:00",
+      "lugar": {
+        "nombre": "Auditorio de Zaragoza",
+        "direccion": "Eduardo Ibarra, 3",
+        "coordenadas": {
+          "lat": 41.6436,
+          "lng": -0.8926
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1460667262436-cf19894f4774"
+        }
+      ],
+      "tags": [
+        "rock",
+        "sinfonico",
+        "orquesta"
+      ]
+    },
+    {
+      "id": "evt_022",
+      "titulo": "Mercado de Antigüedades",
+      "descripcion": "Mercadillo de objetos antiguos, vintage y coleccionismo.",
+      "categoriaId": "tradicional",
+      "organizadorId": "ayuntamiento",
+      "inicio": "2026-01-29T10:00:00",
+      "fin": "2026-01-29T14:00:00",
+      "lugar": {
+        "nombre": "Plaza San Bruno",
+        "direccion": "Plaza San Bruno, s/n",
+        "coordenadas": {
+          "lat": 41.6524,
+          "lng": -0.8807
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1533372224-e0c9c2f35ca8"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1567095761054-7a02e69e5c43"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1451847251646-8a6c0dd1510c"
+        }
+      ],
+      "tags": [
+        "mercado",
+        "antiguedades",
+        "vintage"
+      ]
+    },
+    {
+      "id": "evt_023",
+      "titulo": "Teatro Musical: Mamma Mia",
+      "descripcion": "El exitoso musical con las canciones de ABBA llega a Zaragoza.",
+      "categoriaId": "musica",
+      "organizadorId": "teatro_principal",
+      "inicio": "2026-01-30T20:00:00",
+      "fin": "2026-01-30T22:30:00",
+      "lugar": {
+        "nombre": "Teatro Principal",
+        "direccion": "Calle Fernando el Católico, 28",
+        "coordenadas": {
+          "lat": 41.6538,
+          "lng": -0.8763
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1503095396549-807759245b35"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1598387993281-cecf8b71a8f8"
+        }
+      ],
+      "tags": [
+        "musical",
+        "teatro",
+        "abba"
+      ]
+    },
+    {
+      "id": "evt_024",
+      "titulo": "Festival de Títeres",
+      "descripcion": "Espectáculos de marionetas y títeres para toda la familia.",
+      "categoriaId": "infantil",
+      "organizadorId": "ayuntamiento",
+      "inicio": "2026-01-31T17:00:00",
+      "fin": "2026-01-31T19:00:00",
+      "lugar": {
+        "nombre": "Centro Cívico Delicias",
+        "direccion": "Avenida Navarra, 54",
+        "coordenadas": {
+          "lat": 41.6389,
+          "lng": -0.9086
+        }
+      },
+      "multimedia": [
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1533929736458-ca588d08c8be"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64"
+        },
+        {
+          "tipo": "imagen",
+          "recurso": "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937"
+        }
+      ],
+      "tags": [
+        "titeres",
+        "niños",
+        "marionetas"
+      ]
+    }
+  ]
+}
