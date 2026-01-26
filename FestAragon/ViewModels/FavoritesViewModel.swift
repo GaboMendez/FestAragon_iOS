@@ -1,5 +1,6 @@
 import Foundation
 import UserNotifications
+import SwiftUI
 
 @MainActor
 class FavoritesViewModel: ObservableObject {
