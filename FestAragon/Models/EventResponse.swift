@@ -105,6 +105,22 @@ extension EventoJSON {
             return nil
         }
         
+        // Parsear fecha de fin
+        var endDate: Date?
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        endDate = formatter.date(from: fin)
+        if endDate == nil {
+            formatter.formatOptions = [.withInternetDateTime]
+            endDate = formatter.date(from: fin)
+        }
+        if endDate == nil {
+            let simpleDateFormatter = DateFormatter()
+            simpleDateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
+            simpleDateFormatter.locale = Locale(identifier: "en_US_POSIX")
+            simpleDateFormatter.timeZone = TimeZone(identifier: "Europe/Madrid")
+            endDate = simpleDateFormatter.date(from: fin)
+        }
+        
         // Mapear categoría del JSON a EventCategory
         let category: EventCategory
         switch categoriaId {
@@ -139,8 +155,12 @@ extension EventoJSON {
             title: titulo,
             description: descripcion,
             date: eventDate,
+            endDate: endDate,
             category: category,
             location: lugar.nombre,
+            address: lugar.direccion,
+            latitude: lugar.coordenadas.lat,
+            longitude: lugar.coordenadas.lng,
             imageURL: multimedia.first?.recurso,
             price: 0.0,
             isPast: isPast,

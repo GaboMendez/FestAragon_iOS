@@ -12,24 +12,25 @@ struct ContentView: View {
         TabView {
             HomeView()
                 .tabItem {
-                    Label("Home", systemImage: "house.fill")
+                    Label("Inicio", systemImage: "house.fill")
                 }
             
             MapsView()
                 .tabItem {
-                    Label("Maps", systemImage: "map.fill")
+                    Label("Mapa", systemImage: "map.fill")
                 }
             
             FavoritesView()
                 .tabItem {
-                    Label("Favorites", systemImage: "heart.fill")
+                    Label("Favoritos", systemImage: "star.fill")
                 }
             
             ProfileView()
                 .tabItem {
-                    Label("Profile", systemImage: "person.fill")
+                    Label("Perfil", systemImage: "person.fill")
                 }
         }
+        .tint(Color(red: 166/255, green: 47/255, blue: 54/255))
     }
 }
 

@@ -73,10 +73,15 @@ class HomeViewModel: ObservableObject {
             $showPastEvents
         )
         .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
+        .receive(on: DispatchQueue.main)
         .sink { [weak self] _, _, _, _ in
-            self?.filterEvents()
-            // Mostrar automáticamente la pantalla de resultados cuando hay filtros
-            self?.showSearchResults = self?.isSearching ?? false
+            guard let self = self else { return }
+            self.filterEvents()
+            // Defer the showSearchResults update to avoid publishing during view updates
+            let shouldShowResults = self.isSearching
+            if self.showSearchResults != shouldShowResults {
+                self.showSearchResults = shouldShowResults
+            }
         }
         .store(in: &cancellables)
     }
