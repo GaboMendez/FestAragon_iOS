@@ -160,6 +160,13 @@ class HomeViewModel: ObservableObject {
         filterEvents()
     }
     
+    /// Refresca los eventos desde el servicio (sincroniza favoritos)
+    func refreshEventsWithFavorites() {
+        EventDataService.shared.reloadEvents()
+        events = EventDataService.shared.loadEventsFromJSON()
+        filterEvents()
+    }
+    
     // MARK: - Filter Management
     var activeFiltersDescription: [String] {
         var filters: [String] = []
