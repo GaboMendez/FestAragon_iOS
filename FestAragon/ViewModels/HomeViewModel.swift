@@ -23,6 +23,10 @@ class HomeViewModel: ObservableObject {
         return Calendar.current.date(from: components) ?? Date()
     }()
     
+    // MARK: - Private Properties
+    private var cancellables = Set<AnyCancellable>()
+    private let favoritesManager = FavoritesManager.shared
+    
     // MARK: - Computed Properties
     var availableDates: [Date] {
         let calendar = Calendar.current
@@ -64,7 +68,26 @@ class HomeViewModel: ObservableObject {
     }
     
     // MARK: - Private Methods
+    
+    private func syncFavoriteStatus() {
+        // Sync all events with current favorite status
+        for index in events.indices {
+            events[index].isFavorite = favoritesManager.isFavorite(eventId: events[index].jsonId)
+        }
+        for index in filteredEvents.indices {
+            filteredEvents[index].isFavorite = favoritesManager.isFavorite(eventId: filteredEvents[index].jsonId)
+        }
+    }
+    
     private func setupSubscriptions() {
+        // Observe favorites changes via Combine
+        favoritesManager.$favoriteIds
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.syncFavoriteStatus()
+            }
+            .store(in: &cancellables)
+        
         // Filtrar eventos cuando cambian los parámetros de búsqueda
         Publishers.CombineLatest4(
             $searchText,
@@ -85,9 +108,7 @@ class HomeViewModel: ObservableObject {
         }
         .store(in: &cancellables)
     }
-    
-    private var cancellables = Set<AnyCancellable>()
-    
+        
     private func filterEvents() {
         // Si hay filtros activos, filtrar; si no, mostrar array vacío
         // (HomeView solo mostrará todayEvents cuando no haya filtros)
@@ -148,16 +169,8 @@ class HomeViewModel: ObservableObject {
     }
     
     /// Alterna el estado de favorito de un evento
-    /// Usa FavoritesManager para persistir el cambio automáticamente
     func toggleFavorite(event: Event) {
-        // Alternar en FavoritesManager (persiste en UserDefaults)
-        FavoritesManager.shared.toggleFavorite(eventId: event.jsonId)
-        
-        // Actualizar en el array local
-        if let index = events.firstIndex(where: { $0.id == event.id }) {
-            events[index].isFavorite.toggle()
-            filterEvents()
-        }
+        favoritesManager.toggleFavorite(eventId: event.jsonId)
     }
     
     func loadEventsFromJSON() {

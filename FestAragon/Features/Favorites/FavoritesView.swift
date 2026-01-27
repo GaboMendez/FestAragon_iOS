@@ -2,7 +2,6 @@ import SwiftUI
 
 struct FavoritesView: View {
     @StateObject private var viewModel = FavoritesViewModel()
-    @Environment(\.scenePhase) var scenePhase
     
     var body: some View {
         NavigationStack {
@@ -90,12 +89,6 @@ struct FavoritesView: View {
         }
         .onAppear {
             viewModel.loadFavorites()
-        }
-        .onChange(of: scenePhase) { _, newPhase in
-            // Sync with HomeView changes whenever the app comes to foreground
-            if newPhase == .active {
-                viewModel.loadFavorites()
-            }
         }
     }
 }

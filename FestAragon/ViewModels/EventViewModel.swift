@@ -10,6 +10,7 @@ import SwiftUI
 import MapKit
 import EventKit
 import UserNotifications
+import Combine
 
 @MainActor
 class EventViewModel: ObservableObject {
@@ -27,6 +28,7 @@ class EventViewModel: ObservableObject {
     // MARK: - Private Properties
     private let favoritesManager = FavoritesManager.shared
     private let eventStore = EKEventStore()
+    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Organizer Info (from event data)
     var organizadorNombre: String {
@@ -41,6 +43,19 @@ class EventViewModel: ObservableObject {
     init(event: Event) {
         self.event = event
         self.isFavorite = favoritesManager.isFavorite(eventId: event.jsonId)
+        setupFavoritesObserver()
+    }
+    
+    // MARK: - Private Methods
+    
+    private func setupFavoritesObserver() {
+        favoritesManager.$favoriteIds
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] favoriteIds in
+                guard let self = self else { return }
+                self.isFavorite = favoriteIds.contains(self.event.jsonId)
+            }
+            .store(in: &cancellables)
     }
     
     // MARK: - Computed Properties
@@ -121,7 +136,6 @@ class EventViewModel: ObservableObject {
     }
     
     func toggleFavorite() {
-        isFavorite.toggle()
         favoritesManager.toggleFavorite(eventId: event.jsonId)
     }
     

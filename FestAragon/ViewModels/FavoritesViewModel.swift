@@ -1,6 +1,7 @@
 import Foundation
 import UserNotifications
 import SwiftUI
+import Combine
 
 @MainActor
 class FavoritesViewModel: ObservableObject {
@@ -13,6 +14,7 @@ class FavoritesViewModel: ObservableObject {
     // MARK: - Private Properties
     private let favoritesManager = FavoritesManager.shared
     private let eventDataService = EventDataService.shared
+    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - User Defaults
     private let userDefaults = UserDefaults.standard
@@ -21,30 +23,37 @@ class FavoritesViewModel: ObservableObject {
     
     // MARK: - Init
     init() {
-        // Make sure we've got everythign and just load it in
-        //Options from the Profile View things
+        // Load notification settings
         notificationsEnabled = userDefaults.bool(forKey: notificationsEnabledKey)
         noticeTimeMinutes = userDefaults.integer(forKey: noticeTimeMinutesKey) > 0 ? 
             userDefaults.integer(forKey: noticeTimeMinutesKey) : 15
         
-        // just in case let's make sure we've got this set up right.
+        // Request notification permissions if enabled
         if notificationsEnabled {
             requestNotificationPermissions()
         }
 
-        // And finally... The actual important part of.. loading the favorites
+        // Load favorites
         loadFavorites()
         
-        
+        // Observe favorites changes via Combine
+        setupFavoritesObserver()
     }
     
-    // MARK: - Public Methods
+    // MARK: - Private Methods
     
-    func loadFavorites() {
-        isLoading = true
-        
+    private func setupFavoritesObserver() {
+        favoritesManager.$favoriteIds
+            .dropFirst() // Skip initial value since we already loaded
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] favoriteIds in
+                self?.syncFavorites(with: favoriteIds)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func syncFavorites(with favoriteIds: Set<String>) {
         let allEvents = eventDataService.loadEventsFromJSON()
-        let favoriteIds = favoritesManager.getFavorites()
         
         let favorites = allEvents.filter { event in
             favoriteIds.contains(event.jsonId)
@@ -54,13 +63,24 @@ class FavoritesViewModel: ObservableObject {
             return updatedEvent
         }
         
-        self.favoriteEvents = favorites.sorted { $0.date < $1.date }
+        favoriteEvents = favorites.sorted { $0.date < $1.date }
+        
+        // Reschedule notifications if enabled
+        if notificationsEnabled {
+            scheduleNotificationsForFavorites()
+        }
+    }
+    
+    // MARK: - Public Methods
+    
+    func loadFavorites() {
+        isLoading = true
+        syncFavorites(with: favoritesManager.favoriteIds)
         isLoading = false
     }
     
     func removeFavorite(_ event: Event) {
         favoritesManager.removeFavorite(eventId: event.jsonId)
-        loadFavorites()
     }
     
     func setNotificationsEnabled(_ enabled: Bool) {

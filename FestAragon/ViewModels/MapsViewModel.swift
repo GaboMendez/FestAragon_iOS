@@ -29,6 +29,7 @@ class MapsViewModel: ObservableObject {
     let userLocation = CLLocation(latitude: 41.6561, longitude: -0.8779)
     
     private var cancellables = Set<AnyCancellable>()
+    private let favoritesManager = FavoritesManager.shared
     
     // MARK: - Computed Properties
     
@@ -51,7 +52,28 @@ class MapsViewModel: ObservableObject {
     }
     
     // MARK: - Private Methods
+    
+    private func syncFavoriteStatus() {
+        for index in events.indices {
+            events[index].isFavorite = favoritesManager.isFavorite(eventId: events[index].jsonId)
+        }
+        for index in filteredEvents.indices {
+            filteredEvents[index].isFavorite = favoritesManager.isFavorite(eventId: filteredEvents[index].jsonId)
+        }
+        if let eventId = selectedEvent?.jsonId {
+            selectedEvent?.isFavorite = favoritesManager.isFavorite(eventId: eventId)
+        }
+    }
+    
     private func setupSubscriptions() {
+        // Observe favorites changes
+        favoritesManager.$favoriteIds
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.syncFavoriteStatus()
+            }
+            .store(in: &cancellables)
+        
         Publishers.CombineLatest($searchText, $selectedCategories)
             .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
             .receive(on: DispatchQueue.main)
@@ -131,12 +153,7 @@ class MapsViewModel: ObservableObject {
     
     /// Toggle favorite for an event
     func toggleFavorite(event: Event) {
-        FavoritesManager.shared.toggleFavorite(eventId: event.jsonId)
-        
-        if let index = events.firstIndex(where: { $0.id == event.id }) {
-            events[index].isFavorite.toggle()
-            filterEvents()
-        }
+        favoritesManager.toggleFavorite(eventId: event.jsonId)
     }
     
     /// Get icon name for category
