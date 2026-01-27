@@ -9,21 +9,19 @@ import SwiftUI
 import MapKit
 
 struct EventView: View {
-    let event: Event
+    @StateObject private var viewModel: EventViewModel
     @Environment(\.dismiss) private var dismiss
-    @State private var isFavorite: Bool = false
     
     init(event: Event) {
-        self.event = event
-        self._isFavorite = State(initialValue: FavoritesManager.shared.isFavorite(eventId: event.jsonId))
+        self._viewModel = StateObject(wrappedValue: EventViewModel(event: event))
     }
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                // Event Image
-                ZStack(alignment: .topLeading) {
-                    if let imageURL = event.imageURL, let url = URL(string: imageURL) {
+            VStack(alignment: .leading, spacing: 0) {
+                // MARK: - Event Image with Video Badge
+                ZStack(alignment: .topTrailing) {
+                    if let imageURL = viewModel.event.imageURL, let url = URL(string: imageURL) {
                         AsyncImage(url: url) { phase in
                             switch phase {
                             case .success(let image):
@@ -35,7 +33,7 @@ struct EventView: View {
                             case .empty:
                                 ProgressView()
                                     .frame(maxWidth: .infinity)
-                                    .frame(height: 250)
+                                    .frame(height: 220)
                             @unknown default:
                                 imagePlaceholder
                             }
@@ -43,184 +41,563 @@ struct EventView: View {
                     } else {
                         imagePlaceholder
                     }
+                    
+                    // Video badge - only show if event has videos
+                    if viewModel.hasVideos {
+                        Text("Video")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.black.opacity(0.7))
+                            .cornerRadius(6)
+                            .padding(12)
+                    }
                 }
-                .frame(height: 250)
+                .frame(height: 220)
+                .frame(maxWidth: .infinity)
                 .clipped()
                 
                 VStack(alignment: .leading, spacing: 16) {
-                    // Category badge
-                    HStack {
-                        Text(event.category.displayName)
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(categoryColor.opacity(0.2))
-                            .foregroundColor(categoryColor)
-                            .cornerRadius(16)
-                        
-                        Spacer()
-                        
-                        // Favorite button
-                        Button {
-                            isFavorite.toggle()
-                            FavoritesManager.shared.toggleFavorite(eventId: event.jsonId)
-                        } label: {
-                            Image(systemName: isFavorite ? "star.fill" : "star")
-                                .font(.title2)
-                                .foregroundColor(isFavorite ? .yellow : .gray)
-                        }
-                    }
-                    
-                    // Title
-                    Text(event.title)
+                    // MARK: - Title
+                    Text(viewModel.event.title)
                         .font(.title2)
                         .fontWeight(.bold)
+                        .padding(.top, 16)
                     
-                    // Date and Time
-                    HStack(spacing: 16) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "calendar")
-                                .foregroundColor(.secondary)
-                            Text(formattedDate)
+                    // MARK: - Category Badge
+                    HStack {
+                        Image(systemName: viewModel.categoryIcon)
+                            .foregroundColor(viewModel.categoryColor)
+                        Text(viewModel.event.category.displayName.capitalized)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    // MARK: - Date and Time Row
+                    HStack(spacing: 12) {
+                        Image(systemName: "calendar")
+                            .foregroundColor(.secondary)
+                            .frame(width: 20)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(viewModel.formattedFullDate)
                                 .font(.subheadline)
-                        }
-                        
-                        HStack(spacing: 6) {
-                            Image(systemName: "clock")
+                                .fontWeight(.medium)
+                            Text(viewModel.event.timeRange)
+                                .font(.caption)
                                 .foregroundColor(.secondary)
-                            Text(event.timeRange)
-                                .font(.subheadline)
                         }
                     }
                     
-                    Divider()
-                    
-                    // Location
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Ubicación")
-                            .font(.headline)
-                        
-                        HStack(spacing: 8) {
-                            Image(systemName: "mappin.circle.fill")
-                                .foregroundColor(.red)
-                                .font(.title3)
-                            
+                    // MARK: - Location Row with "Ver mapa" link
+                    HStack {
+                        HStack(spacing: 12) {
+                            Image(systemName: "mappin.and.ellipse")
+                                .foregroundColor(.secondary)
+                                .frame(width: 20)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(event.location)
+                                Text(viewModel.event.location)
                                     .font(.subheadline)
                                     .fontWeight(.medium)
-                                Text(event.address)
+                                Text(viewModel.event.address)
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
                         }
-                        
-                        // Mini Map - Static snapshot to avoid Metal crashes
-                        StaticMapView(coordinate: event.coordinate)
-                            .frame(height: 150)
-                            .cornerRadius(12)
-                        
-                        // Open in Maps button
+                        Spacer()
                         Button {
-                            openInMaps()
+                            viewModel.openInMaps()
                         } label: {
-                            HStack {
-                                Image(systemName: "map.fill")
-                                Text("Abrir en Mapas")
-                            }
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color(red: 166/255, green: 47/255, blue: 54/255))
-                            .cornerRadius(10)
+                            Text("Ver mapa")
+                                .font(.subheadline)
+                                .fontWeight(.bold)
+                                .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
                         }
                     }
                     
-                    Divider()
+                    // MARK: - Organizer Row
+                    HStack(spacing: 12) {
+                        Image(systemName: "person.2.fill")
+                            .foregroundColor(.secondary)
+                            .frame(width: 20)
+                        Text(viewModel.organizadorNombre)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
                     
-                    // Description
+                    Divider()
+                        .padding(.vertical, 8)
+                    
+                    // MARK: - Description Section
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Descripción")
                             .font(.headline)
                         
-                        Text(event.description)
+                        Text(viewModel.event.description)
                             .font(.body)
                             .foregroundColor(.secondary)
                             .lineSpacing(4)
                     }
                     
-                    // Price info
-                    if event.price > 0 {
+                    Divider()
+                        .padding(.vertical, 8)
+                    
+                    // MARK: - Multimedia Gallery Section
+                    if viewModel.hasMultimedia {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Galería multimedia")
+                                .font(.headline)
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    ForEach(viewModel.event.multimedia) { item in
+                                        MediaThumbnailView(item: item) {
+                                            viewModel.selectMedia(item)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
                         Divider()
+                            .padding(.vertical, 8)
+                    }
+                    
+                    // MARK: - Location Section with Map
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Ubicación")
+                            .font(.headline)
+                        
+                        // Mini Map
+                        StaticMapView(coordinate: viewModel.event.coordinate)
+                            .frame(height: 150)
+                            .cornerRadius(12)
+                            .overlay(
+                                Text("Mapa de Google Maps")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            )
+                        
+                        // Map Action Buttons
+                        HStack(spacing: 12) {
+                            Button {
+                                viewModel.openDirections()
+                            } label: {
+                                HStack {
+                                    Image(systemName: "arrow.triangle.turn.up.right.diamond.fill")
+                                        .font(.subheadline)
+                                    Text("Cómo llegar")
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color(red: 166/255, green: 47/255, blue: 54/255))
+                                .cornerRadius(25)
+                            }
+                            
+                            Button {
+                                viewModel.openInMaps()
+                            } label: {
+                                HStack {
+                                    Image(systemName: "mappin.and.ellipse")
+                                        .font(.caption)
+                                    Text("Ver en mapa")
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                }
+                                .foregroundColor(.primary)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(25)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 25)
+                                        .stroke(Color(.systemGray4), lineWidth: 1)
+                                )
+                            }
+                        }
+                    }
+                    
+                    Divider()
+                        .padding(.vertical, 8)
+                    
+                    // MARK: - Organizer Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Organizador")
+                            .font(.headline)
+                        
+                        HStack {
+                            // Organizer Avatar
+                            Circle()
+                                .fill(Color(.systemGray5))
+                                .frame(width: 50, height: 50)
+                                .overlay(
+                                    Image(systemName: "building.2")
+                                        .font(.title3)
+                                        .foregroundColor(.secondary)
+                                )
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(viewModel.organizadorNombre)
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                Text(viewModel.organizadorSubtitulo)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            Button {
+                                viewModel.contactOrganizer()
+                            } label: {
+                                Text("Contactar")
+                                    .font(.subheadline)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                            }
+                        }
+                    }
+                    
+                    Divider()
+                        .padding(.vertical, 8)
+                    
+                    // MARK: - Reminder Button
+                    Button {
+                        viewModel.scheduleReminder()
+                    } label: {
+                        HStack {
+                            Image(systemName: "bell.fill")
+                            Text("Recordarme 15 min antes")
+                                .fontWeight(.medium)
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color(red: 166/255, green: 47/255, blue: 54/255))
+                        .cornerRadius(12)
+                    }
+                    
+                    // MARK: - Calendar and Share Buttons
+                    HStack(spacing: 12) {
+                        Button {
+                            viewModel.addToCalendar()
+                        } label: {
+                            HStack {
+                                Image(systemName: "calendar.badge.plus")
+                                Text("Añadir a calendario")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                            }
+                            .foregroundColor(.primary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color(.systemGray4), lineWidth: 1)
+                            )
+                        }
+                        
+                        Button {
+                            viewModel.shareEvent()
+                        } label: {
+                            HStack {
+                                Image(systemName: "square.and.arrow.up")
+                                Text("Compartir evento")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                            }
+                            .foregroundColor(.primary)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color(.systemGray4), lineWidth: 1)
+                            )
+                        }
+                    }
+                    
+                    // MARK: - Price info
+                    if viewModel.event.price > 0 {
+                        Divider()
+                            .padding(.vertical, 8)
                         
                         HStack {
                             Text("Precio")
                                 .font(.headline)
                             Spacer()
-                            Text(String(format: "%.2f €", event.price))
+                            Text(String(format: "%.2f €", viewModel.event.price))
                                 .font(.title3)
                                 .fontWeight(.semibold)
-                                .foregroundColor(categoryColor)
+                                .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
                         }
                     }
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 24)
             }
         }
-        .navigationTitle("Detalle del Evento")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-    }
-    
-    // MARK: - Helper Properties
-    
-    private var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "dd MMM yyyy"
-        formatter.locale = Locale(identifier: "es_ES")
-        return formatter.string(from: event.date)
-    }
-    
-    private var categoryColor: Color {
-        switch event.category {
-        case .music:
-            return Color(red: 0.2, green: 0.4, blue: 0.8)
-        case .cultural:
-            return Color(red: 0.6, green: 0.3, blue: 0.7)
-        case .infantil:
-            return Color(red: 0.2, green: 0.7, blue: 0.5)
-        case .traditional:
-            return Color(red: 0.9, green: 0.5, blue: 0.2)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    viewModel.toggleFavorite()
+                } label: {
+                    Image(systemName: viewModel.isFavorite ? "star.fill" : "star")
+                        .foregroundColor(viewModel.isFavorite ? .yellow : .gray)
+                }
+            }
+        }
+        .alert(viewModel.alertTitle, isPresented: $viewModel.showingAlert) {
+            Button("OK", role: .cancel) { }
+            if viewModel.showSettingsButton {
+                Button("Abrir Ajustes") {
+                    viewModel.openSettings()
+                }
+            }
+        } message: {
+            Text(viewModel.alertMessage)
+        }
+        .alert("Contacto", isPresented: $viewModel.showingContactAlert) {
+            Button("Copiar email") {
+                UIPasteboard.general.string = viewModel.organizadorEmail
+            }
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(viewModel.alertMessage)
+        }
+        .sheet(isPresented: $viewModel.showingMediaViewer) {
+            if let selectedItem = viewModel.selectedMediaItem {
+                MediaViewerSheet(
+                    mediaItem: selectedItem,
+                    allMedia: viewModel.event.multimedia
+                )
+            }
         }
     }
+    
+    // MARK: - View Components
     
     private var imagePlaceholder: some View {
         Rectangle()
             .fill(Color(.systemGray5))
-            .frame(height: 250)
+            .frame(height: 220)
             .overlay(
                 VStack {
                     Image(systemName: "photo")
                         .font(.largeTitle)
                         .foregroundColor(.secondary)
-                    Text("Imagen no disponible")
+                    Text("Imagen del Evento")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
             )
     }
+}
+
+// MARK: - Media Thumbnail View
+struct MediaThumbnailView: View {
+    let item: MediaItem
+    let onTap: () -> Void
     
-    // MARK: - Actions
+    var body: some View {
+        Button(action: onTap) {
+            ZStack {
+                if item.type == .image {
+                    AsyncImage(url: URL(string: item.url)) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        case .failure(_):
+                            placeholderView
+                        case .empty:
+                            ProgressView()
+                                .frame(width: 80, height: 80)
+                        @unknown default:
+                            placeholderView
+                        }
+                    }
+                } else {
+                    // Video thumbnail with play icon overlay
+                    AsyncImage(url: URL(string: item.url)) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .overlay(
+                                    Circle()
+                                        .fill(Color.black.opacity(0.6))
+                                        .frame(width: 30, height: 30)
+                                        .overlay(
+                                            Image(systemName: "play.fill")
+                                                .font(.caption)
+                                                .foregroundColor(.white)
+                                        )
+                                )
+                        case .failure(_):
+                            videoPlaceholderView
+                        case .empty:
+                            ProgressView()
+                                .frame(width: 80, height: 80)
+                        @unknown default:
+                            videoPlaceholderView
+                        }
+                    }
+                }
+            }
+            .frame(width: 80, height: 80)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+    }
     
-    private func openInMaps() {
-        let coordinate = event.coordinate
-        let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
-        mapItem.name = event.location
-        mapItem.openInMaps(launchOptions: [
-            MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving
-        ])
+    private var placeholderView: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(Color(.systemGray4))
+            .frame(width: 80, height: 80)
+            .overlay(
+                Image(systemName: "photo")
+                    .font(.title2)
+                    .foregroundColor(.white)
+            )
+    }
+    
+    private var videoPlaceholderView: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(Color(.systemGray4))
+            .frame(width: 80, height: 80)
+            .overlay(
+                Image(systemName: "play.fill")
+                    .font(.title2)
+                    .foregroundColor(.white)
+            )
+    }
+}
+
+// MARK: - Media Viewer Sheet
+struct MediaViewerSheet: View {
+    let mediaItem: MediaItem
+    let allMedia: [MediaItem]
+    @Environment(\.dismiss) private var dismiss
+    @State private var currentIndex: Int = 0
+    
+    init(mediaItem: MediaItem, allMedia: [MediaItem]) {
+        self.mediaItem = mediaItem
+        self.allMedia = allMedia
+        // Find the initial index
+        if let index = allMedia.firstIndex(where: { $0.id == mediaItem.id }) {
+            self._currentIndex = State(initialValue: index)
+        }
+    }
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color.black.ignoresSafeArea()
+                
+                TabView(selection: $currentIndex) {
+                    ForEach(Array(allMedia.enumerated()), id: \.element.id) { index, item in
+                        MediaContentView(item: item)
+                            .tag(index)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: .automatic))
+            }
+            .navigationTitle("\(currentIndex + 1) de \(allMedia.count)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .foregroundColor(.white)
+                    }
+                }
+            }
+            .toolbarBackground(.black, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+        }
+    }
+}
+
+// MARK: - Media Content View
+struct MediaContentView: View {
+    let item: MediaItem
+    @State private var scale: CGFloat = 1.0
+    
+    var body: some View {
+        GeometryReader { geometry in
+            if item.type == .image {
+                AsyncImage(url: URL(string: item.url)) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .scaleEffect(scale)
+                            .gesture(
+                                MagnificationGesture()
+                                    .onChanged { value in
+                                        scale = value
+                                    }
+                                    .onEnded { _ in
+                                        withAnimation {
+                                            scale = 1.0
+                                        }
+                                    }
+                            )
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                    case .failure(_):
+                        VStack {
+                            Image(systemName: "photo")
+                                .font(.largeTitle)
+                                .foregroundColor(.gray)
+                            Text("Error al cargar la imagen")
+                                .foregroundColor(.gray)
+                        }
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                    case .empty:
+                        ProgressView()
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                    @unknown default:
+                        EmptyView()
+                    }
+                }
+            } else {
+                // Video placeholder - in a real app, you'd use AVPlayer
+                VStack(spacing: 16) {
+                    Image(systemName: "play.circle.fill")
+                        .font(.system(size: 80))
+                        .foregroundColor(.white)
+                    
+                    Text("Reproducir video")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    
+                    Text("Toca para abrir en el navegador")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+                .frame(width: geometry.size.width, height: geometry.size.height)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    if let url = URL(string: item.url) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -308,8 +685,15 @@ struct StaticMapView: View {
             address: "Eduardo Ibarra, 3",
             latitude: 41.6436,
             longitude: -0.8926,
-            imageURL: nil,
-            price: 25.0
+            imageURL: "https://images.unsplash.com/photo-1465847899084-d164df4dedc6",
+            multimedia: [
+                MediaItem(type: .image, url: "https://images.unsplash.com/photo-1465847899084-d164df4dedc6"),
+                MediaItem(type: .image, url: "https://images.unsplash.com/photo-1519683109079-d5f539e1542f"),
+                MediaItem(type: .video, url: "https://example.com/video.mp4")
+            ],
+            price: 25.0,
+            organizadorNombre: "Auditorio de Zaragoza",
+            organizadorEmail: "info@auditoriozaragoza.com"
         ))
     }
 }
