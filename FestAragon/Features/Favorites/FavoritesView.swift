@@ -2,7 +2,6 @@ import SwiftUI
 
 struct FavoritesView: View {
     @StateObject private var viewModel = FavoritesViewModel()
-    @Environment(\.scenePhase) var scenePhase
     
     var body: some View {
         NavigationStack {
@@ -11,35 +10,6 @@ struct FavoritesView: View {
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Toolbar
-                    HStack {
-                        Text("Favoritos")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .foregroundColor(.white)
-                        
-                        Spacer()
-                        
-                        if !viewModel.favoriteEvents.isEmpty {
-                            Menu {
-                                Button(role: .destructive) {
-                                    viewModel.clearAllFavorites()
-                                } label: {
-                                    Label("Limpiar todos", systemImage: "trash")
-                                }
-                            } label: {
-                                Image(systemName: "ellipsis.circle")
-                                    .foregroundColor(.white)
-                                    .font(.system(size: 18))
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .frame(maxWidth: .infinity)
-                    .background(Color(red: 166/255, green: 47/255, blue: 54/255))
-                    .frame(height: 56)
-                    
                     if viewModel.isLoading {
                         VStack {
                             Spacer()
@@ -71,11 +41,14 @@ struct FavoritesView: View {
                                         .padding(.horizontal, 16)
                                     
                                     ForEach(viewModel.favoriteEvents) { event in
-                                        FavoriteEventCard(event: event) {
-                                            withAnimation(.easeInOut(duration: 0.2)) {
-                                                viewModel.removeFavorite(event)
+                                        NavigationLink(destination: EventView(event: event)) {
+                                            FavoriteEventCard(event: event) {
+                                                withAnimation(.easeInOut(duration: 0.2)) {
+                                                    viewModel.removeFavorite(event)
+                                                }
                                             }
                                         }
+                                        .buttonStyle(.plain)
                                     }
                                 }
                                 .padding(.top, 8)
@@ -86,16 +59,33 @@ struct FavoritesView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarBackButtonHidden(false)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Favoritos")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if !viewModel.favoriteEvents.isEmpty {
+                        Menu {
+                            Button(role: .destructive) {
+                                viewModel.clearAllFavorites()
+                            } label: {
+                                Label("Limpiar todos", systemImage: "trash")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .foregroundColor(.white)
+                        }
+                    }
+                }
+            }
+            .toolbarBackground(Color(red: 166/255, green: 47/255, blue: 54/255), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
         }
         .onAppear {
             viewModel.loadFavorites()
-        }
-        .onChange(of: scenePhase) { _, newPhase in
-            // Sync with HomeView changes whenever the app comes to foreground
-            if newPhase == .active {
-                viewModel.loadFavorites()
-            }
         }
     }
 }

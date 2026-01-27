@@ -46,7 +46,7 @@ class EventDataService {
             let response = try decoder.decode(EventResponse.self, from: data)
             
             // Convertir EventoJSON a Event y sincronizar con FavoritesManager
-            var loadedEvents = response.eventos.compactMap { $0.toEvent() }
+            var loadedEvents = response.eventos.compactMap { $0.toEvent(organizadores: response.organizadores) }
             
             // Sincronizar estado de favoritos
             loadedEvents = loadedEvents.map { event in

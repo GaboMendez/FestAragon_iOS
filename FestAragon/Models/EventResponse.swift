@@ -76,7 +76,7 @@ struct Multimedia: Codable {
 
 // MARK: - Extension para convertir EventoJSON a Event
 extension EventoJSON {
-    func toEvent() -> Event? {
+    func toEvent(organizadores: [Organizador]) -> Event? {
         // Probar múltiples formatos de fecha
         let formatter = ISO8601DateFormatter()
         var startDate: Date?
@@ -149,6 +149,17 @@ extension EventoJSON {
         // Verificar si está en favoritos
         let isFavorite = FavoritesManager.shared.isFavorite(eventId: id)
         
+        // Convertir multimedia del JSON a MediaItem
+        let mediaItems = multimedia.map { media in
+            MediaItem(
+                type: MediaType(rawValue: media.tipo) ?? .image,
+                url: media.recurso
+            )
+        }
+        
+        // Buscar organizador por ID
+        let organizador = organizadores.first { $0.id == organizadorId }
+        
         return Event(
             id: UUID(),
             jsonId: id,
@@ -162,9 +173,12 @@ extension EventoJSON {
             latitude: lugar.coordenadas.lat,
             longitude: lugar.coordenadas.lng,
             imageURL: multimedia.first?.recurso,
+            multimedia: mediaItems,
             price: 0.0,
             isPast: isPast,
-            isFavorite: isFavorite
+            isFavorite: isFavorite,
+            organizadorNombre: organizador?.nombre ?? "Organizador",
+            organizadorEmail: organizador?.contacto ?? ""
         )
     }
 }

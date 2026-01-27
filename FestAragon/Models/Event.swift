@@ -1,6 +1,33 @@
 import Foundation
 import CoreLocation
 
+// MARK: - MediaItem
+struct MediaItem: Identifiable, Codable {
+    let id: UUID
+    let type: MediaType
+    let url: String
+    
+    init(id: UUID = UUID(), type: MediaType, url: String) {
+        self.id = id
+        self.type = type
+        self.url = url
+    }
+}
+
+enum MediaType: String, Codable {
+    case image = "imagen"
+    case video = "video"
+    
+    var iconName: String {
+        switch self {
+        case .image:
+            return "photo"
+        case .video:
+            return "play.fill"
+        }
+    }
+}
+
 struct Event: Identifiable, Codable {
     let id: UUID
     let jsonId: String
@@ -14,9 +41,12 @@ struct Event: Identifiable, Codable {
     let latitude: Double
     let longitude: Double
     let imageURL: String?
+    let multimedia: [MediaItem]
     let price: Double
     let isPast: Bool
     var isFavorite: Bool
+    let organizadorNombre: String
+    let organizadorEmail: String
     
     // Computed property for CLLocationCoordinate2D
     var coordinate: CLLocationCoordinate2D {
@@ -48,9 +78,12 @@ struct Event: Identifiable, Codable {
         latitude: Double = 0.0,
         longitude: Double = 0.0,
         imageURL: String? = nil,
+        multimedia: [MediaItem] = [],
         price: Double = 0.0,
         isPast: Bool = false,
-        isFavorite: Bool = false
+        isFavorite: Bool = false,
+        organizadorNombre: String = "",
+        organizadorEmail: String = ""
     ) {
         self.id = id
         self.jsonId = jsonId
@@ -64,9 +97,12 @@ struct Event: Identifiable, Codable {
         self.latitude = latitude
         self.longitude = longitude
         self.imageURL = imageURL
+        self.multimedia = multimedia
         self.price = price
         self.isPast = isPast
         self.isFavorite = isFavorite
+        self.organizadorNombre = organizadorNombre
+        self.organizadorEmail = organizadorEmail
     }
 }
 
