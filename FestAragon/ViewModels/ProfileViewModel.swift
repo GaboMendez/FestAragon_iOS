@@ -37,9 +37,11 @@ class ProfileViewModel: NSObject, ObservableObject {
     private let pushNotifKey = "push_notifications_enabled"
     private let noticeTimeKey = "notice_time_minutes"
     private let shareEventsKey = "share_events_enabled"
+    private let eventRemindersKey = "favorites_notifications_enabled" // Clave compartida con Favoritos
     
     override init() {
         super.init()
+        loadUserData() // Cargar datos al inicializar
         updatePermissionStates()
     }
     
@@ -52,6 +54,7 @@ class ProfileViewModel: NSObject, ObservableObject {
         userLocation = userDefaults.string(forKey: userLocationKey) ?? "Aragón, España"
         emailNotificationsEnabled = userDefaults.bool(forKey: emailNotifKey)
         pushNotificationsEnabled = userDefaults.bool(forKey: pushNotifKey)
+        eventRemindersEnabled = userDefaults.bool(forKey: eventRemindersKey) // Cargar desde clave compartida
         noticeTimeMinutes = userDefaults.integer(forKey: noticeTimeKey) > 0 ? userDefaults.integer(forKey: noticeTimeKey) : 15
         shareEventsEnabled = userDefaults.bool(forKey: shareEventsKey)
         
@@ -110,9 +113,29 @@ class ProfileViewModel: NSObject, ObservableObject {
         do {
             noticeTimeMinutes = minutes
             userDefaults.set(minutes, forKey: noticeTimeKey)
+            userDefaults.set(minutes, forKey: "noticeTimeMinutes") // Clave global
+            userDefaults.set(minutes, forKey: "favorites_notice_time_minutes") // Sincronizar con Favoritos
             userDefaults.synchronize()
+            
+            // Si las notificaciones están activas, reprogramar
+            if eventRemindersEnabled {
+                NotificationManager.shared.rescheduleAllFavoriteNotifications(minutesBefore: minutes)
+            }
         } catch {
             print("Error saving notice time: \(error.localizedDescription)")
+        }
+    }
+    
+    // Método helper para formatear el tiempo de aviso
+    var noticeTimeFormatted: String {
+        if noticeTimeMinutes >= 1440 {
+            let days = noticeTimeMinutes / 1440
+            return "\(days) día\(days > 1 ? "s" : "")"
+        } else if noticeTimeMinutes >= 60 {
+            let hours = noticeTimeMinutes / 60
+            return "\(hours) hora\(hours > 1 ? "s" : "")"
+        } else {
+            return "\(noticeTimeMinutes) min"
         }
     }
     
@@ -191,9 +214,15 @@ class ProfileViewModel: NSObject, ObservableObject {
     }
     
     func checkAndRequestNotificationPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
-            DispatchQueue.main.async {
-                self?.eventRemindersEnabled = granted
+        Task {
+            let granted = await NotificationManager.shared.requestAuthorization()
+            await MainActor.run {
+                self.eventRemindersEnabled = granted
+                self.userDefaults.set(granted, forKey: self.eventRemindersKey) // Sincronizar con Favoritos
+                if granted {
+                    // Reprogramar notificaciones con la configuración actual
+                    NotificationManager.shared.rescheduleAllFavoriteNotifications(minutesBefore: self.noticeTimeMinutes)
+                }
             }
         }
     }

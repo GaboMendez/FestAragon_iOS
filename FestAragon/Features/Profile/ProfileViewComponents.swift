@@ -135,7 +135,7 @@ struct NotificationsSection: View {
     @ObservedObject var viewModel: ProfileViewModel
     @State private var showingNoticeTimeAlert = false
     
-    let noticeTimeOptions = [(label: "5 min", value: 5), (label: "10 min", value: 10), (label: "15 min", value: 15), (label: "30 min", value: 30), (label: "60 min", value: 60)]
+    let noticeTimeOptions = [(label: "10 min", value: 10), (label: "15 min", value: 15), (label: "30 min", value: 30), (label: "60 min", value: 60), (label: "1 día", value: 1440)]
     
     var body: some View {
         VStack(spacing: 0) {
@@ -163,7 +163,7 @@ struct NotificationsSection: View {
                         .font(.system(.body, design: .default))
                         .foregroundColor(.primary)
                     
-                    Text("\(viewModel.noticeTimeMinutes) min antes")
+                    Text("\(viewModel.noticeTimeFormatted) antes")
                         .font(.system(.caption, design: .default))
                         .foregroundColor(.gray)
                 }
@@ -173,9 +173,13 @@ struct NotificationsSection: View {
                 Toggle("", isOn: $viewModel.eventRemindersEnabled)
                     .onChange(of: viewModel.eventRemindersEnabled) { _, isEnabled in
                         if isEnabled {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { //Añadido estas porque me crasheo la aplicacion una de las opciones (Particularmente la de persmisos de camara) y decidí que nunca mas.
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                                 viewModel.checkAndRequestNotificationPermission()
                             }
+                        } else {
+                            // Desactivar notificaciones y sincronizar
+                            UserDefaults.standard.set(false, forKey: "favorites_notifications_enabled")
+                            NotificationManager.shared.cancelAllNotifications()
                         }
                     }
             }
@@ -251,7 +255,7 @@ struct NotificationsSection: View {
                     
                     Spacer()
                     
-                    Text("\(viewModel.noticeTimeMinutes) min")
+                    Text(viewModel.noticeTimeFormatted)
                         .font(.system(.body, design: .default))
                         .foregroundColor(.gray)
                         .padding(.trailing, 8)

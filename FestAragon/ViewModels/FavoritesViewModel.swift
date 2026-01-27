@@ -38,6 +38,9 @@ class FavoritesViewModel: ObservableObject {
         
         // Observe favorites changes via Combine
         setupFavoritesObserver()
+        
+        // Observe changes in noticeTimeMinutes from other screens (like Profile)
+        setupNoticeTimeObserver()
     }
     
     // MARK: - Private Methods
@@ -48,6 +51,24 @@ class FavoritesViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] favoriteIds in
                 self?.syncFavorites(with: favoriteIds)
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func setupNoticeTimeObserver() {
+        // Observar cambios en UserDefaults para sincronizar entre pantallas
+        NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                let newValue = self.userDefaults.integer(forKey: self.noticeTimeMinutesKey)
+                if newValue > 0 && newValue != self.noticeTimeMinutes {
+                    self.noticeTimeMinutes = newValue
+                    // Si las notificaciones están activas, reprogramar
+                    if self.notificationsEnabled {
+                        self.scheduleNotificationsForFavorites()
+                    }
+                }
             }
             .store(in: &cancellables)
     }
@@ -85,9 +106,21 @@ class FavoritesViewModel: ObservableObject {
         userDefaults.set(enabled, forKey: notificationsEnabledKey)
         
         if enabled {
-            scheduleNotificationsForFavorites()
+            // Solicitar permisos y programar notificaciones
+            Task {
+                let granted = await NotificationManager.shared.requestAuthorization()
+                if granted {
+                    NotificationManager.shared.rescheduleAllFavoriteNotifications(minutesBefore: noticeTimeMinutes)
+                } else {
+                    // Si se deniegan los permisos, desactivar el toggle
+                    await MainActor.run {
+                        self.notificationsEnabled = false
+                        self.userDefaults.set(false, forKey: self.notificationsEnabledKey)
+                    }
+                }
+            }
         } else {
-            cancelAllNotifications()
+            NotificationManager.shared.cancelAllNotifications()
         }
     }
     
@@ -96,75 +129,34 @@ class FavoritesViewModel: ObservableObject {
         noticeTimeMinutes = minutes
         userDefaults.set(minutes, forKey: noticeTimeMinutesKey)
         
+        // Guardar también en la clave global para que otras pantallas lo usen
+        userDefaults.set(minutes, forKey: "noticeTimeMinutes")
+        
         if notificationsEnabled {
-            scheduleNotificationsForFavorites()
+            // Reprogramar todas las notificaciones con el nuevo tiempo
+            NotificationManager.shared.rescheduleAllFavoriteNotifications(minutesBefore: minutes)
         }
     }
     
     func clearAllFavorites() {
         favoritesManager.clearAllFavorites()
         favoriteEvents = []
+        // Cancelar todas las notificaciones al limpiar favoritos
+        if notificationsEnabled {
+            NotificationManager.shared.cancelAllNotifications()
+        }
     }
     
-    // MARK: - Private Methods
+    // MARK: - Private Notification Methods
     
     private func requestNotificationPermissions() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-            if granted {
-                DispatchQueue.main.async {
-                    UIApplication.shared.registerForRemoteNotifications()
-                }
-            }
+        Task {
+            await NotificationManager.shared.requestAuthorization()
         }
     }
     
     private func scheduleNotificationsForFavorites() {
-        cancelAllNotifications()
-        
-        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
-            guard let self = self else { return }
-            
-            if settings.authorizationStatus == .notDetermined {
-                self.requestNotificationPermissions()
-            }
-            
-            for event in self.favoriteEvents {
-                self.scheduleNotificationForEvent(event)
-            }
-        }
-    }
-    
-    private func scheduleNotificationForEvent(_ event: Event) {
-        let notificationTime = event.date.addingTimeInterval(-Double(noticeTimeMinutes * 60))
-        
-        guard notificationTime > Date() else {
-            return
-        }
-        
-        let content = UNMutableNotificationContent()
-        content.title = "Próximo evento"
-        content.body = "En \(noticeTimeMinutes) minutos comienza: \(event.title)"
-        content.sound = .default
-        content.badge = NSNumber(value: UIApplication.shared.applicationIconBadgeNumber + 1)
-        
-        content.userInfo = [
-            "eventId": event.jsonId,
-            "eventTitle": event.title,
-            "eventLocation": event.location,
-            "eventTime": event.date.timeIntervalSince1970
-        ]
-        
-        let timeInterval = notificationTime.timeIntervalSinceNow
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(timeInterval, 1), repeats: false)
-        
-        let requestId = "notification_\(event.jsonId)_\(noticeTimeMinutes)"
-        let request = UNNotificationRequest(identifier: requestId, content: content, trigger: trigger)
-        
-        UNUserNotificationCenter.current().add(request)
-    }
-    
-    private func cancelAllNotifications() {
-        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+        NotificationManager.shared.rescheduleAllFavoriteNotifications(minutesBefore: noticeTimeMinutes)
     }
 }
 
