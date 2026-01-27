@@ -53,14 +53,11 @@ class FavoritesViewModel: ObservableObject {
     }
     
     private func syncFavorites(with favoriteIds: Set<String>) {
-        let allEvents = eventDataService.loadEventsFromJSON()
+        // Use eventsWithFavorites to get fresh favorite status
+        let allEvents = eventDataService.eventsWithFavorites
         
         let favorites = allEvents.filter { event in
             favoriteIds.contains(event.jsonId)
-        }.map { event in
-            var updatedEvent = event
-            updatedEvent.isFavorite = true
-            return updatedEvent
         }
         
         favoriteEvents = favorites.sorted { $0.date < $1.date }

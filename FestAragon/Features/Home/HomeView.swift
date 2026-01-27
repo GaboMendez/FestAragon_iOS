@@ -120,11 +120,14 @@ struct HomeView: View {
                                 .frame(maxWidth: .infinity)
                         } else {
                             ForEach(viewModel.todayEvents) { event in
-                                EventCard(event: event) {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        viewModel.toggleFavorite(event: event)
+                                NavigationLink(destination: EventView(event: event)) {
+                                    EventCard(event: event) {
+                                        withAnimation(.easeInOut(duration: 0.2)) {
+                                            viewModel.toggleFavorite(event: event)
+                                        }
                                     }
                                 }
+                                .buttonStyle(.plain)
                             }
                         }
                     }

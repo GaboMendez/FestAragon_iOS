@@ -43,16 +43,18 @@ struct ProfileView: View {
                 }
                 .padding(.horizontal, 12)
             }
-            .navigationTitle("Mi Perfil")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     Text("Mi Perfil")
                         .font(.headline)
+                        .fontWeight(.bold)
                         .foregroundColor(.white)
                 }
             }
-            .background(Color(UIColor.systemBackground))
+            .toolbarBackground(Color(red: 166/255, green: 47/255, blue: 54/255), for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .background(Color(red: 250/255, green: 245/255, blue: 235/255))
         }
         .sheet(isPresented: $showingImagePicker) {
             ImagePicker(image: $viewModel.profileImage)

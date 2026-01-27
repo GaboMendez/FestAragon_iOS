@@ -1,5 +1,98 @@
 import SwiftUI
 
+// MARK: - Image Loader
+class ImageLoader: ObservableObject {
+    @Published var image: UIImage?
+    @Published var isLoading = false
+    
+    private var urlString: String?
+    private static let cache = NSCache<NSString, UIImage>()
+    
+    func load(from urlString: String?) {
+        guard let urlString = urlString, !urlString.isEmpty else {
+            self.image = nil
+            return
+        }
+        
+        self.urlString = urlString
+        
+        // Check cache first
+        if let cached = ImageLoader.cache.object(forKey: urlString as NSString) {
+            self.image = cached
+            return
+        }
+        
+        guard let url = URL(string: urlString) else {
+            self.image = nil
+            return
+        }
+        
+        isLoading = true
+        
+        URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
+            DispatchQueue.main.async {
+                self?.isLoading = false
+                
+                guard let data = data, error == nil,
+                      let loadedImage = UIImage(data: data) else {
+                    self?.image = nil
+                    return
+                }
+                
+                // Cache the image
+                ImageLoader.cache.setObject(loadedImage, forKey: urlString as NSString)
+                
+                // Only update if URL hasn't changed
+                if self?.urlString == urlString {
+                    self?.image = loadedImage
+                }
+            }
+        }.resume()
+    }
+}
+
+// MARK: - Cached Async Image
+struct CachedAsyncImage: View {
+    let urlString: String?
+    let height: CGFloat
+    
+    @StateObject private var loader = ImageLoader()
+    
+    var body: some View {
+        Group {
+            if let image = loader.image {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: height)
+                    .clipped()
+            } else if loader.isLoading {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(height: height)
+                    .overlay(
+                        ProgressView()
+                    )
+            } else {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(height: height)
+                    .overlay(
+                        Image(systemName: "photo")
+                            .font(.largeTitle)
+                            .foregroundColor(.gray)
+                    )
+            }
+        }
+        .onAppear {
+            loader.load(from: urlString)
+        }
+        .onChange(of: urlString) { newValue in
+            loader.load(from: newValue)
+        }
+    }
+}
+
 // MARK: - Favorite Event Card
 struct FavoriteEventCard: View {
     let event: Event
@@ -14,34 +107,7 @@ struct FavoriteEventCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Imagen del evento
-            AsyncImage(url: event.imageURL.flatMap { URL(string: $0) }) { phase in
-                switch phase {
-                case .empty:
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(height: 180)
-                        .overlay(
-                            ProgressView()
-                        )
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: 180)
-                        .clipped()
-                case .failure:
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(height: 180)
-                        .overlay(
-                            Image(systemName: "photo")
-                                .font(.largeTitle)
-                                .foregroundColor(.gray)
-                        )
-                @unknown default:
-                    EmptyView()
-                }
-            }
+            CachedAsyncImage(urlString: event.imageURL, height: 180)
             
             // Contenido de la tarjeta
             VStack(alignment: .leading, spacing: 0) {
@@ -83,11 +149,14 @@ struct FavoriteEventCard: View {
                     
                     Spacer()
                     
-                    Button(action: onRemove) {
+                    Button(action: {
+                        onRemove()
+                    }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 24))
                             .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
                     }
+                    .buttonStyle(.borderless)
                 }
                 .padding(16)
             }
