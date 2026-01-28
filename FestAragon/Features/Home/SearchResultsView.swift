@@ -4,10 +4,6 @@ struct SearchResultsView: View {
     @ObservedObject var viewModel: HomeViewModel
     @Environment(\.dismiss) private var dismiss
     
-    private func isPastEvent(_ event: Event) -> Bool {
-        AppConfiguration.isPastDate(event.date)
-    }
-    
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -89,47 +85,14 @@ struct SearchResultsView: View {
                     .padding(.top, 60)
                 } else {
                     ForEach(viewModel.filteredEvents) { event in
-                        let isPast = isPastEvent(event)
-                        
-                        if isPast {
-                            // Past event - not tappable, with overlay
-                            ZStack {
-                                EventCard(event: event) {
-                                    // Favorites still work for past events
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        viewModel.toggleFavorite(event: event)
-                                    }
-                                }
-                                .opacity(0.5)
-                                
-                                // Centered overlay indicating past event
-                                HStack(spacing: 8) {
-                                    Image(systemName: "clock.badge.xmark")
-                                        .font(.system(size: 16, weight: .semibold))
-                                    Text("Evento finalizado")
-                                        .font(.system(size: 16, weight: .semibold))
-                                }
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 12)
-                                .background(
-                                    Capsule()
-                                        .fill(Color.black.opacity(0.75))
-                                )
-                            }
-                            .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                        } else {
-                            // Future event - tappable, navigates to detail
-                            NavigationLink(destination: EventView(event: event)) {
-                                EventCard(event: event) {
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        viewModel.toggleFavorite(event: event)
-                                    }
+                        EventCardWrapper(event: event) {
+                            EventCard(event: event) {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    viewModel.toggleFavorite(event: event)
                                 }
                             }
-                            .buttonStyle(.plain)
-                            .transition(.opacity.combined(with: .scale(scale: 0.95)))
                         }
+                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
                     }
                 }
             }

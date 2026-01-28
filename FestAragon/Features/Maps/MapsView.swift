@@ -198,7 +198,7 @@ struct MapsView: View {
                         } else {
                             LazyVStack(spacing: 12) {
                                 ForEach(viewModel.nearbyEvents) { event in
-                                    NavigationLink(destination: EventView(event: event)) {
+                                    EventCardWrapper(event: event, overlaySize: .small) {
                                         NearbyEventCard(
                                             event: event,
                                             distance: viewModel.formattedDistance(for: event),
@@ -211,7 +211,6 @@ struct MapsView: View {
                                             }
                                         )
                                     }
-                                    .buttonStyle(.plain)
                                 }
                             }
                             .padding(.horizontal)

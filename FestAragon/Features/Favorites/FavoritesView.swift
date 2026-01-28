@@ -42,43 +42,12 @@ struct FavoritesView: View {
                                         .padding(.horizontal, 16)
                                     
                                     ForEach(viewModel.favoriteEvents) { event in
-                                        let isPast = AppConfiguration.isPastDate(event.date)
-                                        
-                                        if isPast {
-                                            // Past event - not tappable, with overlay
-                                            ZStack {
-                                                FavoriteEventCard(event: event) {
-                                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                                        viewModel.removeFavorite(event)
-                                                    }
-                                                }
-                                                .opacity(0.5)
-                                                
-                                                // Centered overlay indicating past event
-                                                HStack(spacing: 8) {
-                                                    Image(systemName: "clock.badge.xmark")
-                                                        .font(.system(size: 16, weight: .semibold))
-                                                    Text("Evento finalizado")
-                                                        .font(.system(size: 16, weight: .semibold))
-                                                }
-                                                .foregroundColor(.white)
-                                                .padding(.horizontal, 20)
-                                                .padding(.vertical, 12)
-                                                .background(
-                                                    Capsule()
-                                                        .fill(Color.black.opacity(0.75))
-                                                )
-                                            }
-                                        } else {
-                                            // Future event - tappable, navigates to detail
-                                            NavigationLink(destination: EventView(event: event)) {
-                                                FavoriteEventCard(event: event) {
-                                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                                        viewModel.removeFavorite(event)
-                                                    }
+                                        EventCardWrapper(event: event) {
+                                            FavoriteEventCard(event: event) {
+                                                withAnimation(.easeInOut(duration: 0.2)) {
+                                                    viewModel.removeFavorite(event)
                                                 }
                                             }
-                                            .buttonStyle(.plain)
                                         }
                                     }
                                 }
