@@ -3,6 +3,7 @@ import AVFoundation
 import Photos
 import UserNotifications
 import CoreLocation
+import Combine
 
 enum ProfileEditField {
     case name
@@ -11,6 +12,7 @@ enum ProfileEditField {
     case location
 }
 
+@MainActor
 class ProfileViewModel: NSObject, ObservableObject {
     @Published var profileImage: UIImage?
     @Published var userName: String = "María García López"
@@ -18,16 +20,23 @@ class ProfileViewModel: NSObject, ObservableObject {
     @Published var userPhone: String = "+34 612 345 678"
     @Published var userLocation: String = "Aragón, España"
     
+    // Notification settings (observed from centralized manager)
     @Published var eventRemindersEnabled: Bool = false
+    @Published var noticeTimeMinutes: Int = 15
+    
+    // Other settings (local to profile)
     @Published var emailNotificationsEnabled: Bool = false
     @Published var pushNotificationsEnabled: Bool = true
-    @Published var noticeTimeMinutes: Int = 15
     
     @Published var locationPermissionGranted: Bool = false
     @Published var cameraPermissionGranted: Bool = false
     @Published var shareEventsEnabled: Bool = true
     
+    // MARK: - Private Properties
     private let userDefaults = UserDefaults.standard
+    private let notificationSettings = NotificationSettingsManager.shared
+    private var cancellables = Set<AnyCancellable>()
+    
     private let profileImageKey = "user_image_path"
     private let userNameKey = "user_name"
     private let userEmailKey = "user_email"
@@ -35,14 +44,33 @@ class ProfileViewModel: NSObject, ObservableObject {
     private let userLocationKey = "user_location"
     private let emailNotifKey = "email_notifications_enabled"
     private let pushNotifKey = "push_notifications_enabled"
-    private let noticeTimeKey = "notice_time_minutes"
     private let shareEventsKey = "share_events_enabled"
-    private let eventRemindersKey = "favorites_notifications_enabled" // Clave compartida con Favoritos
     
     override init() {
         super.init()
-        loadUserData() // Cargar datos al inicializar
+        loadUserData()
         updatePermissionStates()
+        setupNotificationSettingsObserver()
+    }
+    
+    // MARK: - Notification Settings Observer
+    
+    private func setupNotificationSettingsObserver() {
+        // Observe isEnabled changes from centralized manager
+        notificationSettings.$isEnabled
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] enabled in
+                self?.eventRemindersEnabled = enabled
+            }
+            .store(in: &cancellables)
+        
+        // Observe noticeTimeMinutes changes from centralized manager
+        notificationSettings.$noticeTimeMinutes
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] minutes in
+                self?.noticeTimeMinutes = minutes
+            }
+            .store(in: &cancellables)
     }
     
     // MARK: - Data Persistence
@@ -54,8 +82,10 @@ class ProfileViewModel: NSObject, ObservableObject {
         userLocation = userDefaults.string(forKey: userLocationKey) ?? "Aragón, España"
         emailNotificationsEnabled = userDefaults.bool(forKey: emailNotifKey)
         pushNotificationsEnabled = userDefaults.bool(forKey: pushNotifKey)
-        eventRemindersEnabled = userDefaults.bool(forKey: eventRemindersKey) // Cargar desde clave compartida
-        noticeTimeMinutes = userDefaults.integer(forKey: noticeTimeKey) > 0 ? userDefaults.integer(forKey: noticeTimeKey) : 15
+        
+        // Sync notification settings from centralized manager
+        eventRemindersEnabled = notificationSettings.isEnabled
+        noticeTimeMinutes = notificationSettings.noticeTimeMinutes
         shareEventsEnabled = userDefaults.bool(forKey: shareEventsKey)
         
         // Load profile image
@@ -109,34 +139,21 @@ class ProfileViewModel: NSObject, ObservableObject {
         }
     }
     
+    /// Set notice time in minutes (delegates to centralized manager)
     func setNoticeTime(_ minutes: Int) {
-        do {
-            noticeTimeMinutes = minutes
-            userDefaults.set(minutes, forKey: noticeTimeKey)
-            userDefaults.set(minutes, forKey: "noticeTimeMinutes") // Clave global
-            userDefaults.set(minutes, forKey: "favorites_notice_time_minutes") // Sincronizar con Favoritos
-            userDefaults.synchronize()
-            
-            // Si las notificaciones están activas, reprogramar
-            if eventRemindersEnabled {
-                NotificationManager.shared.rescheduleAllFavoriteNotifications(minutesBefore: minutes)
-            }
-        } catch {
-            print("Error saving notice time: \(error.localizedDescription)")
+        notificationSettings.setNoticeTime(minutes)
+    }
+    
+    /// Toggle event reminders enabled state (delegates to centralized manager)
+    func setEventRemindersEnabled(_ enabled: Bool) {
+        Task {
+            await notificationSettings.setNotificationsEnabled(enabled)
         }
     }
     
     // Método helper para formatear el tiempo de aviso
     var noticeTimeFormatted: String {
-        if noticeTimeMinutes >= 1440 {
-            let days = noticeTimeMinutes / 1440
-            return "\(days) día\(days > 1 ? "s" : "")"
-        } else if noticeTimeMinutes >= 60 {
-            let hours = noticeTimeMinutes / 60
-            return "\(hours) hora\(hours > 1 ? "s" : "")"
-        } else {
-            return "\(noticeTimeMinutes) min"
-        }
+        notificationSettings.noticeTimeFormatted
     }
     
     // MARK: - Image Handling
@@ -215,15 +232,7 @@ class ProfileViewModel: NSObject, ObservableObject {
     
     func checkAndRequestNotificationPermission() {
         Task {
-            let granted = await NotificationManager.shared.requestAuthorization()
-            await MainActor.run {
-                self.eventRemindersEnabled = granted
-                self.userDefaults.set(granted, forKey: self.eventRemindersKey) // Sincronizar con Favoritos
-                if granted {
-                    // Reprogramar notificaciones con la configuración actual
-                    NotificationManager.shared.rescheduleAllFavoriteNotifications(minutesBefore: self.noticeTimeMinutes)
-                }
-            }
+            await notificationSettings.setNotificationsEnabled(true)
         }
     }
 }

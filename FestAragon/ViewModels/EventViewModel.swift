@@ -176,79 +176,61 @@ class EventViewModel: ObservableObject {
     
     // MARK: - Reminder (Notifications)
     
+    /// Schedule a reminder notification for this event using centralized settings
     func scheduleReminder() {
-        let center = UNUserNotificationCenter.current()
-        
-        center.getNotificationSettings { [weak self] settings in
-            guard let self = self else { return }
+        Task {
+            // Check current authorization status
+            let status = await NotificationSettingsManager.shared.authorizationStatus
+            await NotificationSettingsManager.shared.refreshAuthorizationStatus()
             
-            switch settings.authorizationStatus {
+            switch status {
             case .denied:
-                // Permission was denied - guide to settings
-                Task { @MainActor in
-                    self.showAlert(
-                        title: "Notificaciones desactivadas",
-                        message: "Para recibir recordatorios, activa las notificaciones en Ajustes.",
+                showAlert(
+                    title: "Notificaciones desactivadas",
+                    message: "Para recibir recordatorios, activa las notificaciones en Ajustes.",
+                    showSettings: true
+                )
+                
+            case .authorized, .provisional, .ephemeral:
+                // Already authorized - schedule using centralized manager
+                await scheduleReminderWithSettings()
+                
+            case .notDetermined:
+                // Request permission first
+                let granted = await NotificationSettingsManager.shared.requestAuthorization()
+                if granted {
+                    await scheduleReminderWithSettings()
+                } else {
+                    showAlert(
+                        title: "Permiso denegado",
+                        message: "No podrás recibir recordatorios sin activar las notificaciones.",
                         showSettings: true
                     )
                 }
                 
-            case .authorized, .provisional, .ephemeral:
-                // Already authorized - schedule directly
-                self.createNotification()
-                
-            case .notDetermined:
-                // First time - request permission, then schedule if granted
-                center.requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
-                    guard let self = self else { return }
-                    if granted {
-                        self.createNotification()
-                    } else {
-                        Task { @MainActor in
-                            self.showAlert(
-                                title: "Permiso denegado",
-                                message: "No podrás recibir recordatorios sin activar las notificaciones.",
-                                showSettings: true
-                            )
-                        }
-                    }
-                }
-                
             @unknown default:
-                self.createNotification()
+                await scheduleReminderWithSettings()
             }
         }
     }
     
-    private func createNotification() {
-        let content = UNMutableNotificationContent()
-        content.title = "🎉 \(event.title)"
-        content.body = "Comienza en 15 minutos en \(event.location)"
-        content.sound = .default
+    /// Schedule reminder using centralized NotificationSettingsManager
+    private func scheduleReminderWithSettings() async {
+        let settings = NotificationSettingsManager.shared
+        let minutes = settings.noticeTimeMinutes
         
-        // Schedule 15 minutes before event
-        let triggerDate = event.date.addingTimeInterval(-15 * 60)
-        let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: triggerDate)
-        let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+        // Use centralized notification manager
+        NotificationManager.shared.scheduleEventNotification(
+            event: event,
+            minutesBefore: minutes
+        )
         
-        let request = UNNotificationRequest(identifier: event.jsonId, content: content, trigger: trigger)
-        
-        UNUserNotificationCenter.current().add(request) { [weak self] error in
-            Task { @MainActor in
-                guard let self = self else { return }
-                if error == nil {
-                    self.showAlert(
-                        title: "Recordatorio programado",
-                        message: "✅ Recibirás una notificación 15 minutos antes del evento."
-                    )
-                } else {
-                    self.showAlert(
-                        title: "Error",
-                        message: "No se pudo programar el recordatorio. Inténtalo de nuevo."
-                    )
-                }
-            }
-        }
+        // Show confirmation with dynamic time
+        let timeText = settings.noticeTimeFormatted
+        showAlert(
+            title: "Recordatorio programado",
+            message: "✅ Recibirás una notificación \(timeText) antes del evento."
+        )
     }
     
     // MARK: - Calendar

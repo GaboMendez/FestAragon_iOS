@@ -61,5 +61,90 @@ Por ejemplo, si estás trabajando en el requisito "Navegación por fecha", el no
 
 Este enfoque nos permitirá trabajar en paralelo en diferentes funcionalidades, mantener el código de la rama principal estable y facilitar la revisión de código.
 
+## Arquitectura de Notificaciones
+
+La gestión de notificaciones sigue una arquitectura centralizada para garantizar la sincronización entre todas las vistas de la aplicación (Perfil, Favoritos y Detalle de Evento).
+
+### NotificationSettingsManager
+
+Ubicación: `FestAragon/Services/NotificationSettingsManager.swift`
+
+Este es el **único punto de verdad** para la configuración de notificaciones:
+
+```swift
+@MainActor
+final class NotificationSettingsManager: ObservableObject {
+    static let shared = NotificationSettingsManager()
+    
+    @Published private(set) var isEnabled: Bool = false
+    @Published private(set) var noticeTimeMinutes: Int = 15
+    @Published private(set) var authorizationStatus: UNAuthorizationStatus = .notDetermined
+}
+```
+
+### Propiedades Reactivas
+
+| Propiedad | Descripción |
+|-----------|-------------|
+| `isEnabled` | Estado de activación de recordatorios de eventos |
+| `noticeTimeMinutes` | Minutos de antelación para la notificación |
+| `authorizationStatus` | Estado de permisos del sistema |
+
+### Métodos Principales
+
+| Método | Descripción |
+|--------|-------------|
+| `setNotificationsEnabled(_ enabled: Bool) async -> Bool` | Activa/desactiva notificaciones con manejo de permisos |
+| `setNoticeTime(_ minutes: Int)` | Configura el tiempo de aviso previo |
+| `onFavoriteAdded(_ event: Event)` | Programa notificación al añadir favorito |
+| `onFavoriteRemoved(eventId: String)` | Cancela notificación al eliminar favorito |
+
+### Flujo de Datos
+
+```
+┌─────────────────────────────────────┐
+│   NotificationSettingsManager       │
+│   (Fuente Única de Verdad)          │
+│   - isEnabled                       │
+│   - noticeTimeMinutes               │
+└─────────────────┬───────────────────┘
+                  │ @Published (Combine)
+    ┌─────────────┼─────────────┐
+    ▼             ▼             ▼
+┌────────┐  ┌──────────┐  ┌───────────┐
+│Perfil  │  │Favoritos │  │Detalle    │
+│ View   │  │  View    │  │  Evento   │
+└────────┘  └──────────┘  └───────────┘
+```
+
+### Integración en ViewModels
+
+Los ViewModels observan el manager centralizado mediante Combine:
+
+```swift
+// En FavoritesViewModel, ProfileViewModel
+private func setupNotificationSettingsObserver() {
+    notificationSettings.$isEnabled
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] enabled in
+            self?.notificationsEnabled = enabled
+        }
+        .store(in: &cancellables)
+    
+    notificationSettings.$noticeTimeMinutes
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] minutes in
+            self?.noticeTimeMinutes = minutes
+        }
+        .store(in: &cancellables)
+}
+```
+
+### Sincronización Automática
+
+- **FavoritesManager**: Al añadir/eliminar favoritos, automáticamente programa/cancela notificaciones
+- **Cambio de configuración**: Al modificar el tiempo de aviso, se reprograman todas las notificaciones existentes
+- **Permisos denegados**: Si el sistema deniega permisos, el estado se actualiza automáticamente en todas las vistas
+
 ## TRELLO
 https://trello.com/invite/b/6967b73bf1e99a8647f839c3/ATTIbe24d7173321ea67fc7ec88e7b7e4e5a623C257E/trabajo-grupal-ios

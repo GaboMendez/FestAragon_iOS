@@ -24,13 +24,14 @@ struct FavoritesView: View {
                                 // Notifications Settings
                                 NotificationsSettingsSection(
                                     isEnabled: $viewModel.notificationsEnabled,
-                                    noticeMinutes: $viewModel.noticeTimeMinutes
-                                ) {
-                                    viewModel.setNotificationsEnabled(viewModel.notificationsEnabled)
-                                    if viewModel.notificationsEnabled {
-                                        viewModel.setNoticeTime(viewModel.noticeTimeMinutes)
+                                    noticeMinutes: $viewModel.noticeTimeMinutes,
+                                    onToggleChanged: { isEnabled in
+                                        viewModel.setNotificationsEnabled(isEnabled)
+                                    },
+                                    onNoticeTimeChanged: { minutes in
+                                        viewModel.setNoticeTime(minutes)
                                     }
-                                }
+                                )
                                 .padding(.top, 16)
                                 
                                 // Favorited Events

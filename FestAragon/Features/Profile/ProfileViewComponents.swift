@@ -172,15 +172,7 @@ struct NotificationsSection: View {
                 
                 Toggle("", isOn: $viewModel.eventRemindersEnabled)
                     .onChange(of: viewModel.eventRemindersEnabled) { _, isEnabled in
-                        if isEnabled {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                viewModel.checkAndRequestNotificationPermission()
-                            }
-                        } else {
-                            // Desactivar notificaciones y sincronizar
-                            UserDefaults.standard.set(false, forKey: "favorites_notifications_enabled")
-                            NotificationManager.shared.cancelAllNotifications()
-                        }
+                        viewModel.setEventRemindersEnabled(isEnabled)
                     }
             }
             .padding(.vertical, 8)

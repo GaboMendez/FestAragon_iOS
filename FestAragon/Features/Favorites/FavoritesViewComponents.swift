@@ -197,7 +197,8 @@ struct FavoritesEmptyState: View {
 struct NotificationsSettingsSection: View {
     @Binding var isEnabled: Bool
     @Binding var noticeMinutes: Int
-    let onSettingsChanged: () -> Void
+    let onToggleChanged: (Bool) -> Void
+    let onNoticeTimeChanged: (Int) -> Void
     
     var body: some View {
         VStack(spacing: 16) {
@@ -211,8 +212,8 @@ struct NotificationsSettingsSection: View {
                 Toggle("", isOn: $isEnabled)
                     .labelsHidden()
                     .tint(Color(red: 166/255, green: 47/255, blue: 54/255))
-                    .onChange(of: isEnabled) { _ in
-                        onSettingsChanged()
+                    .onChange(of: isEnabled) { _, newValue in
+                        onToggleChanged(newValue)
                     }
             }
             .padding(.horizontal, 16)
@@ -228,8 +229,7 @@ struct NotificationsSettingsSection: View {
                     HStack(spacing: 12) {
                         ForEach([15, 30, 1440], id: \.self) { minutes in
                             Button(action: {
-                                noticeMinutes = minutes
-                                onSettingsChanged()
+                                onNoticeTimeChanged(minutes)
                             }) {
                                 Text(minutes == 1440 ? "1d" : "\(minutes)m")
                                     .font(.system(size: 14, weight: .semibold))

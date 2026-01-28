@@ -20,6 +20,7 @@ import Combine
 /// ```
 ///
 /// Los favoritos se guardan automáticamente en UserDefaults y persisten entre sesiones de la app.
+/// Notificaciones se programan/cancelan automáticamente via NotificationSettingsManager.
 class FavoritesManager: ObservableObject {
     static let shared = FavoritesManager()
     
@@ -35,6 +36,14 @@ class FavoritesManager: ObservableObject {
         favoriteIds = Set(saved)
     }
     
+    // MARK: - Event Lookup Helper
+    
+    /// Get event by ID for notification scheduling
+    private func getEvent(by eventId: String) -> Event? {
+        let allEvents = EventDataService.shared.loadEventsFromJSON()
+        return allEvents.first { $0.jsonId == eventId }
+    }
+    
     // MARK: - Public Methods
     
     /// Verifica si un evento está marcado como favorito
@@ -48,10 +57,20 @@ class FavoritesManager: ObservableObject {
         if favoriteIds.contains(eventId) {
             favoriteIds.remove(eventId)
             saveFavorites()
+            // Cancel notification for removed favorite
+            Task { @MainActor in
+                NotificationSettingsManager.shared.onFavoriteRemoved(eventId: eventId)
+            }
             return false
         } else {
             favoriteIds.insert(eventId)
             saveFavorites()
+            // Schedule notification for new favorite
+            if let event = getEvent(by: eventId) {
+                Task { @MainActor in
+                    NotificationSettingsManager.shared.onFavoriteAdded(event)
+                }
+            }
             return true
         }
     }
@@ -61,18 +80,30 @@ class FavoritesManager: ObservableObject {
         guard !favoriteIds.contains(eventId) else { return }
         favoriteIds.insert(eventId)
         saveFavorites()
+        // Schedule notification for new favorite
+        if let event = getEvent(by: eventId) {
+            Task { @MainActor in
+                NotificationSettingsManager.shared.onFavoriteAdded(event)
+            }
+        }
     }
     
     /// Remueve un evento de favoritos
     func removeFavorite(eventId: String) {
         favoriteIds.remove(eventId)
         saveFavorites()
+        // Cancel notification for removed favorite
+        Task { @MainActor in
+            NotificationSettingsManager.shared.onFavoriteRemoved(eventId: eventId)
+        }
     }
     
     /// Limpia todos los favoritos
     func clearAllFavorites() {
         favoriteIds.removeAll()
         userDefaults.removeObject(forKey: favoritesKey)
+        // Cancel all notifications when clearing favorites
+        NotificationManager.shared.cancelAllNotifications()
     }
     
     /// Obtiene todos los IDs de eventos marcados como favoritos

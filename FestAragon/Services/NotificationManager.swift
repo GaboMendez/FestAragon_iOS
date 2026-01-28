@@ -9,7 +9,7 @@ import Foundation
 import UserNotifications
 
 /// Gestor de notificaciones locales para eventos
-/// 
+///
 /// **Cómo usar:**
 /// ```swift
 /// // Solicitar permisos
@@ -44,7 +44,9 @@ class NotificationManager: NSObject {
     @discardableResult
     func requestAuthorization() async -> Bool {
         do {
-            let granted = try await notificationCenter.requestAuthorization(options: [.alert, .sound, .badge])
+            // iOS 18 compatible: agregar .provisional para better UX
+            let options: UNAuthorizationOptions = [.alert, .sound, .badge, .provisional]
+            let granted = try await notificationCenter.requestAuthorization(options: options)
             print(granted ? "Permisos de notificación concedidos" : "Permisos de notificación denegados")
             return granted
         } catch {
@@ -232,7 +234,12 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         // Mostrar la notificación incluso cuando la app está abierta
-        completionHandler([.banner, .sound, .badge])
+        // iOS 18 compatible: usar .list en lugar de .banner (que está deprecado)
+        if #available(iOS 14.0, *) {
+            completionHandler([.list, .sound, .badge])
+        } else {
+            completionHandler([.alert, .sound, .badge])
+        }
     }
     
     /// Se llama cuando el usuario interactúa con una notificación
