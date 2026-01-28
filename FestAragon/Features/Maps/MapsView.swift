@@ -15,42 +15,7 @@ struct MapsView: View {
             VStack(spacing: 0) {
                 // Search bar - only show in map view
                 if !viewModel.showListView {
-                    HStack(spacing: 12) {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255).opacity(0.7))
-                        
-                        TextField("Buscar ubicación...", text: $viewModel.searchText)
-                            .font(.system(size: 16))
-                            .foregroundColor(.primary)
-                        
-                        if !viewModel.searchText.isEmpty {
-                            Button {
-                                withAnimation(.easeOut(duration: 0.2)) {
-                                    viewModel.searchText = ""
-                                }
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 18))
-                                    .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255).opacity(0.6))
-                            }
-                            .transition(.scale.combined(with: .opacity))
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 14)
-                            .fill(Color.white)
-                            .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color(red: 166/255, green: 47/255, blue: 54/255).opacity(0.15), lineWidth: 1)
-                    )
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                    .animation(.easeInOut, value: viewModel.searchText)
+                    MapSearchBar(searchText: $viewModel.searchText)
                 }
                 
                 // Map Section - hide when in list view
@@ -64,56 +29,50 @@ struct MapsView: View {
                                         isSelected: viewModel.selectedEvent?.id == event.id
                                     )
                                     .onTapGesture {
-                                        centerOnEvent(event)
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                            centerOnEvent(event)
+                                        }
                                     }
                                 }
                             }
                         }
                         .frame(height: 280)
+                        .onTapGesture {
+                            // Dismiss callout when tapping on map background
+                            withAnimation(.easeOut(duration: 0.2)) {
+                                viewModel.selectedEvent = nil
+                            }
+                        }
+                        
+                        // Selected event callout
+                        if let selectedEvent = viewModel.selectedEvent {
+                            VStack {
+                                Spacer()
+                                MapEventCallout(
+                                    event: selectedEvent,
+                                    distance: viewModel.formattedDistance(for: selectedEvent),
+                                    onClose: {
+                                        withAnimation(.easeOut(duration: 0.2)) {
+                                            viewModel.selectedEvent = nil
+                                        }
+                                    },
+                                    onFavoriteToggle: {
+                                        viewModel.toggleFavorite(event: selectedEvent)
+                                    }
+                                )
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                                .padding(.horizontal, 12)
+                                .padding(.bottom, 8)
+                            }
+                            .frame(height: 280)
+                        }
                         
                         // Map controls
-                        VStack(spacing: 8) {
-                            // User location button
-                            Button {
-                                centerOnUserLocation()
-                            } label: {
-                                Image(systemName: "location.fill")
-                                    .font(.system(size: 16))
-                                    .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
-                                    .frame(width: 36, height: 36)
-                                    .background(Color.white)
-                                    .cornerRadius(8)
-                                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-                            }
-                            
-                            // Zoom controls
-                            VStack(spacing: 0) {
-                                Button {
-                                    zoomIn()
-                                } label: {
-                                    Image(systemName: "plus")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(.primary)
-                                        .frame(width: 36, height: 36)
-                                }
-                                
-                                Divider()
-                                    .frame(width: 36)
-                                
-                                Button {
-                                    zoomOut()
-                                } label: {
-                                    Image(systemName: "minus")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(.primary)
-                                        .frame(width: 36, height: 36)
-                                }
-                            }
-                            .frame(width: 36)
-                            .background(Color.white)
-                            .cornerRadius(8)
-                            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-                        }
+                        MapControls(
+                            onLocationTap: centerOnUserLocation,
+                            onZoomIn: zoomIn,
+                            onZoomOut: zoomOut
+                        )
                         .padding(.trailing, 12)
                         .padding(.top, 8)
                     }
@@ -124,41 +83,14 @@ struct MapsView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         // Category filters
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("Filtrar por categoría")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                
-                                Spacer()
-                                
-                                if !viewModel.selectedCategories.isEmpty {
-                                    Button("Limpiar") {
-                                        viewModel.clearFilters()
-                                    }
-                                    .font(.subheadline)
-                                    .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
-                                }
-                            }
-                            .padding(.horizontal)
-                            
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 8) {
-                                    ForEach(EventCategory.allCases, id: \.self) { category in
-                                        CategoryPill(
-                                            title: viewModel.displayName(for: category),
-                                            icon: viewModel.iconName(for: category),
-                                            isSelected: viewModel.isCategorySelected(category)
-                                        ) {
-                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                                viewModel.toggleCategory(category)
-                                            }
-                                        }
-                                    }
-                                }
-                                .padding(.horizontal)
-                            }
-                        }
+                        CategoryFiltersSection(
+                            categories: EventCategory.allCases,
+                            selectedCategories: viewModel.selectedCategories,
+                            displayName: viewModel.displayName(for:),
+                            iconName: viewModel.iconName(for:),
+                            onToggle: viewModel.toggleCategory,
+                            onClear: viewModel.clearFilters
+                        )
                         
                         Divider()
                             .padding(.horizontal)
@@ -222,23 +154,11 @@ struct MapsView: View {
                         
                         // Map Legend - only show in map view
                         if !viewModel.showListView {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Leyenda del Mapa")
-                                    .font(.headline)
-                                
-                                ForEach(EventCategory.allCases, id: \.self) { category in
-                                    LegendRow(
-                                        icon: viewModel.iconName(for: category),
-                                        title: legendTitle(for: category),
-                                        category: category
-                                    )
-                                }
-                            }
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .cornerRadius(12)
-                            .padding(.horizontal)
-                            .padding(.bottom, 20)
+                            MapLegendSection(
+                                categories: EventCategory.allCases,
+                                iconName: viewModel.iconName(for:),
+                                legendTitle: legendTitle(for:)
+                            )
                         }
                     }
                     .padding(.top, 16)
@@ -308,250 +228,6 @@ struct MapsView: View {
     }
 }
 
-// MARK: - Event Map Marker
-struct EventMapMarker: View {
-    let category: EventCategory
-    var isSelected: Bool = false
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            ZStack {
-                Circle()
-                    .fill(markerColor)
-                    .frame(width: isSelected ? 40 : 32, height: isSelected ? 40 : 32)
-                    .shadow(color: markerColor.opacity(0.4), radius: isSelected ? 6 : 3, x: 0, y: 2)
-                
-                Image(systemName: iconName)
-                    .font(.system(size: isSelected ? 18 : 14, weight: .semibold))
-                    .foregroundColor(.white)
-            }
-            
-            // Marker point
-            Triangle()
-                .fill(markerColor)
-                .frame(width: 12, height: 8)
-                .offset(y: -2)
-        }
-        .scaleEffect(isSelected ? 1.2 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
-    }
-    
-    private var markerColor: Color {
-        switch category {
-        case .music:
-            return Color(red: 0.2, green: 0.4, blue: 0.8)
-        case .cultural:
-            return Color(red: 0.6, green: 0.3, blue: 0.7)
-        case .infantil:
-            return Color(red: 0.2, green: 0.7, blue: 0.5)
-        case .traditional:
-            return Color(red: 0.9, green: 0.5, blue: 0.2)
-        }
-    }
-    
-    private var iconName: String {
-        switch category {
-        case .music:
-            return "music.note"
-        case .cultural:
-            return "theatermasks.fill"
-        case .infantil:
-            return "figure.and.child.holdinghands"
-        case .traditional:
-            return "sparkles"
-        }
-    }
-}
-
-// MARK: - Triangle Shape
-struct Triangle: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.midX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-        path.closeSubpath()
-        return path
-    }
-}
-
-// MARK: - Category Pill
-struct CategoryPill: View {
-    let title: String
-    let icon: String
-    var isSelected: Bool
-    let action: () -> Void
-    
-    private let themeColor = Color(red: 166/255, green: 47/255, blue: 54/255)
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.system(size: 12))
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(isSelected ? themeColor : Color(.systemGray6))
-            .foregroundColor(isSelected ? .white : .primary)
-            .cornerRadius(20)
-        }
-    }
-}
-
-// MARK: - Nearby Event Card
-struct NearbyEventCard: View {
-    let event: Event
-    let distance: String
-    let onFavoriteToggle: () -> Void
-    let onMapTap: () -> Void
-    
-    private var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "es_ES")
-        formatter.dateFormat = "EEE, d MMM"
-        return formatter.string(from: event.date).capitalized
-    }
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            // Event Image
-            ZStack {
-                if let imageURL = event.imageURL, let url = URL(string: imageURL) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        case .failure(_):
-                            imagePlaceholder
-                        case .empty:
-                            ProgressView()
-                                .frame(width: 80, height: 80)
-                        @unknown default:
-                            imagePlaceholder
-                        }
-                    }
-                } else {
-                    imagePlaceholder
-                }
-            }
-            .frame(width: 80, height: 80)
-            .cornerRadius(8)
-            .clipped()
-            
-            // Event Info
-            VStack(alignment: .leading, spacing: 4) {
-                Text(event.title)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .lineLimit(2)
-                    .foregroundColor(.primary)
-                
-                HStack(spacing: 4) {
-                    Image(systemName: "mappin")
-                        .font(.caption2)
-                    Text("\(event.location) - \(distance)")
-                        .font(.caption)
-                }
-                .foregroundColor(.secondary)
-                
-                HStack(spacing: 4) {
-                    Image(systemName: "calendar")
-                        .font(.caption2)
-                    Text(formattedDate)
-                        .font(.caption)
-                }
-                .foregroundColor(.secondary)
-                
-                HStack(spacing: 4) {
-                    Image(systemName: "clock")
-                        .font(.caption2)
-                    Text(event.timeRange)
-                        .font(.caption)
-                }
-                .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            // Action buttons
-            VStack(spacing: 12) {
-                Button(action: onFavoriteToggle) {
-                    Image(systemName: event.isFavorite ? "star.fill" : "star")
-                        .font(.system(size: 18))
-                        .foregroundColor(event.isFavorite ? .yellow : .gray)
-                }
-                
-                Button(action: onMapTap) {
-                    Image(systemName: "map.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
-                }
-            }
-        }
-        .padding(12)
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-    }
-    
-    private var imagePlaceholder: some View {
-        Rectangle()
-            .fill(Color(.systemGray5))
-            .overlay(
-                Text("Imagen")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            )
-    }
-}
-
-// MARK: - Legend Row
-struct LegendRow: View {
-    let icon: String
-    let title: String
-    let category: EventCategory
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(markerColor)
-                    .frame(width: 28, height: 28)
-                
-                Image(systemName: icon)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white)
-            }
-            
-            Text(title)
-                .font(.subheadline)
-                .foregroundColor(.primary)
-            
-            Spacer()
-        }
-    }
-    
-    private var markerColor: Color {
-        switch category {
-        case .music:
-            return Color(red: 0.2, green: 0.4, blue: 0.8)
-        case .cultural:
-            return Color(red: 0.6, green: 0.3, blue: 0.7)
-        case .infantil:
-            return Color(red: 0.2, green: 0.7, blue: 0.5)
-        case .traditional:
-            return Color(red: 0.9, green: 0.5, blue: 0.2)
-        }
-    }
-}
-
 #Preview {
     MapsView()
 }
-
