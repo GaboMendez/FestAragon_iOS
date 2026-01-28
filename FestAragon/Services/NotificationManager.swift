@@ -68,20 +68,9 @@ class NotificationManager: NSObject {
     ///   - event: El evento para el cual programar la notificación
     ///   - minutesBefore: Minutos antes del evento para enviar la notificación
     func scheduleEventNotification(event: Event, minutesBefore: Int) {
-        // Fecha de demo del proyecto: 28 de enero de 2026 a las 12:00
-        let demoDate: Date = {
-            var components = DateComponents()
-            components.year = 2026
-            components.month = 1
-            components.day = 28
-            components.hour = 12
-            components.minute = 0
-            return Calendar.current.date(from: components) ?? Date()
-        }()
-        
         // Verificar que el EVENTO sea en el futuro respecto a la fecha de demo
-        guard event.date > demoDate else {
-            print("El evento ya pasó respecto a la fecha de demo (21/01/2026), no se programa notificación")
+        guard event.date > AppConfiguration.demoDate else {
+            print("El evento ya pasó respecto a la fecha de demo, no se programa notificación")
             return
         }
         
@@ -128,13 +117,13 @@ class NotificationManager: NSObject {
         
         // Crear el trigger: usar intervalo de tiempo para testing inmediato
         let trigger: UNNotificationTrigger
-        if notificationDate < demoDate {
+        if notificationDate < AppConfiguration.demoDate {
             // Si la notificación debería haber sido antes, programarla para 10 segundos
             trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
             print("Notificación ajustada para demo: se enviará en 10 segundos")
         } else {
             // Calcular segundos hasta la notificación desde la fecha de demo
-            let timeInterval = notificationDate.timeIntervalSince(demoDate)
+            let timeInterval = notificationDate.timeIntervalSince(AppConfiguration.demoDate)
             if timeInterval > 0 {
                 trigger = UNTimeIntervalNotificationTrigger(timeInterval: timeInterval, repeats: false)
                 print("Notificación programada para dentro de \(Int(timeInterval)) segundos")

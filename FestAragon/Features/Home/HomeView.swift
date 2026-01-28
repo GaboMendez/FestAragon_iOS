@@ -11,26 +11,28 @@ struct HomeView: View {
                     // Header con toggle de eventos pasados
                     HStack {
                         Text("Ver eventos pasados")
-                            .font(.body)
+                            .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.black)
                         
                         Spacer()
                         
                         Toggle("", isOn: $viewModel.showPastEvents)
                             .labelsHidden()
-                            .tint(.black)
+                            .tint(Color(red: 166/255, green: 47/255, blue: 54/255))
                     }
                     .padding(.horizontal)
                     .padding(.top, 16)
                     .animation(.easeInOut, value: viewModel.showPastEvents)
                     
                     // Barra de búsqueda
-                    HStack {
+                    HStack(spacing: 12) {
                         Image(systemName: "magnifyingglass")
-                            .foregroundColor(.gray)
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255).opacity(0.7))
                         
-                        TextField("Buscar evento...", text: $viewModel.searchText)
-                            .textFieldStyle(.plain)
+                        TextField("Buscar evento, lugar...", text: $viewModel.searchText)
+                            .font(.system(size: 16))
+                            .foregroundColor(.primary)
                         
                         if !viewModel.searchText.isEmpty {
                             Button {
@@ -39,17 +41,23 @@ struct HomeView: View {
                                 }
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.gray)
+                                    .font(.system(size: 18))
+                                    .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255).opacity(0.6))
                             }
                             .transition(.scale.combined(with: .opacity))
-                        } else {
-                            Image(systemName: "magnifyingglass")
-                                .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
                         }
                     }
-                    .padding()
-                    .background(Color(red: 245/255, green: 230/255, blue: 230/255))
-                    .cornerRadius(10)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color.white)
+                            .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color(red: 166/255, green: 47/255, blue: 54/255).opacity(0.15), lineWidth: 1)
+                    )
                     .padding(.horizontal)
                     .animation(.easeInOut, value: viewModel.searchText)
                     

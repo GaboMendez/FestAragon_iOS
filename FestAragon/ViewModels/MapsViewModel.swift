@@ -14,17 +14,6 @@ class MapsViewModel: ObservableObject {
     @Published var showListView: Bool = false
     @Published var selectedEvent: Event?
     
-    // Demo date: January 21, 2026
-    private let demoDate: Date = {
-        var components = DateComponents()
-        components.year = 2026
-        components.month = 1
-        components.day = 21
-        components.hour = 12
-        components.minute = 0
-        return Calendar.current.date(from: components) ?? Date()
-    }()
-    
     // User location (simulated for demo - Plaza del Pilar)
     let userLocation = CLLocation(latitude: 41.6561, longitude: -0.8779)
     
@@ -87,9 +76,7 @@ class MapsViewModel: ObservableObject {
         var result = events
         
         // Filter only future events (from demo date)
-        let calendar = Calendar.current
-        let startOfToday = calendar.startOfDay(for: demoDate)
-        result = result.filter { $0.date >= startOfToday }
+        result = result.filter { $0.date >= AppConfiguration.startOfDemoDay }
         
         // Filter by search text
         if !searchText.isEmpty {

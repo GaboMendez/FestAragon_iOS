@@ -12,26 +12,13 @@ class HomeViewModel: ObservableObject {
     @Published var showPastEvents: Bool = false
     @Published var showSearchResults: Bool = false
     
-    // Fecha de demo fija: 28 de enero de 2026
-    private let demoDate: Date = {
-        var components = DateComponents()
-        components.year = 2026
-        components.month = 1
-        components.day = 28
-        components.hour = 12
-        components.minute = 0
-        return Calendar.current.date(from: components) ?? Date()
-    }()
-    
     // MARK: - Private Properties
     private var cancellables = Set<AnyCancellable>()
     private let favoritesManager = FavoritesManager.shared
     
     // MARK: - Computed Properties
     var availableDates: [Date] {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: demoDate)
-        return (0..<5).compactMap { calendar.date(byAdding: .day, value: $0, to: today) }
+        AppConfiguration.upcomingDates(count: 5)
     }
     
     var categorizedEvents: [EventCategory: [Event]] {
@@ -39,11 +26,8 @@ class HomeViewModel: ObservableObject {
     }
     
     var todayEvents: [Event] {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: demoDate)
-        
-        return events.filter { event in
-            calendar.isDate(event.date, inSameDayAs: today)
+        events.filter { event in
+            AppConfiguration.isToday(event.date)
         }.sorted { $0.date < $1.date }
     }
     
@@ -121,9 +105,7 @@ class HomeViewModel: ObservableObject {
         
         // Filtrar por eventos pasados/futuros basado en demoDate
         if !showPastEvents {
-            let calendar = Calendar.current
-            let startOfToday = calendar.startOfDay(for: demoDate)
-            result = result.filter { $0.date >= startOfToday }
+            result = result.filter { $0.date >= AppConfiguration.startOfDemoDay }
         }
         
         // Filtrar por búsqueda (título, descripción o ubicación)
@@ -146,8 +128,8 @@ class HomeViewModel: ObservableObject {
             result = result.filter { calendar.isDate($0.date, inSameDayAs: date) }
         }
         
-        // Ordenar por fecha ascendente
-        filteredEvents = result.sorted { $0.date < $1.date }
+        // Ordenar por fecha: más recientes primero
+        filteredEvents = result.sorted { $0.date > $1.date }
     }
     
     // MARK: - Public Methods

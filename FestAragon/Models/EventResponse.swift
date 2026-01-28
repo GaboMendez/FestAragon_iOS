@@ -136,15 +136,8 @@ extension EventoJSON {
             category = .music
         }
         
-        // Determinar si el evento es pasado basado en la fecha de demo (21 enero 2026)
-        var components = DateComponents()
-        components.year = 2026
-        components.month = 1
-        components.day = 21
-        components.hour = 0
-        components.minute = 0
-        let demoDate = Calendar.current.date(from: components) ?? Date()
-        let isPast = eventDate < demoDate
+        // Determinar si el evento es pasado basado en la fecha de demo
+        let isPast = AppConfiguration.isPastDate(eventDate)
         
         // Verificar si está en favoritos
         let isFavorite = FavoritesManager.shared.isFavorite(eventId: id)

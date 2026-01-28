@@ -13,27 +13,42 @@ struct MapsView: View {
             VStack(spacing: 0) {
                 // Search bar - only show in map view
                 if !viewModel.showListView {
-                    HStack {
+                    HStack(spacing: 12) {
                         Image(systemName: "magnifyingglass")
-                            .foregroundColor(.secondary)
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255).opacity(0.7))
                         
                         TextField("Buscar ubicación...", text: $viewModel.searchText)
-                            .textFieldStyle(.plain)
+                            .font(.system(size: 16))
+                            .foregroundColor(.primary)
                         
                         if !viewModel.searchText.isEmpty {
                             Button {
-                                viewModel.searchText = ""
+                                withAnimation(.easeOut(duration: 0.2)) {
+                                    viewModel.searchText = ""
+                                }
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.secondary)
+                                    .font(.system(size: 18))
+                                    .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255).opacity(0.6))
                             }
+                            .transition(.scale.combined(with: .opacity))
                         }
                     }
-                    .padding(10)
-                    .background(Color(.systemGray6))
-                    .cornerRadius(10)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color.white)
+                            .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color(red: 166/255, green: 47/255, blue: 54/255).opacity(0.15), lineWidth: 1)
+                    )
                     .padding(.horizontal)
                     .padding(.vertical, 8)
+                    .animation(.easeInOut, value: viewModel.searchText)
                 }
                 
                 // Map Section - hide when in list view
