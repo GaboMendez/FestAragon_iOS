@@ -146,5 +146,159 @@ private func setupNotificationSettingsObserver() {
 - **Cambio de configuración**: Al modificar el tiempo de aviso, se reprograman todas las notificaciones existentes
 - **Permisos denegados**: Si el sistema deniega permisos, el estado se actualiza automáticamente en todas las vistas
 
+## Arquitectura de Privacidad y Permisos
+
+La gestión de permisos de privacidad sigue la misma arquitectura centralizada que las notificaciones, garantizando sincronización entre Perfil, Mapas y Detalle de Evento.
+
+### PrivacySettingsManager
+
+Ubicación: `FestAragon/Services/PrivacySettingsManager.swift`
+
+Este es el **único punto de verdad** para la configuración de privacidad:
+
+```swift
+@MainActor
+final class PrivacySettingsManager: NSObject, ObservableObject {
+    static let shared = PrivacySettingsManager()
+    
+    @Published private(set) var locationPermissionGranted: Bool = false
+    @Published private(set) var cameraPermissionGranted: Bool = false
+    @Published private(set) var shareEventsEnabled: Bool = true
+    @Published private(set) var locationAuthorizationStatus: CLAuthorizationStatus = .notDetermined
+    @Published private(set) var cameraAuthorizationStatus: AVAuthorizationStatus = .notDetermined
+}
+```
+
+### Propiedades Reactivas
+
+| Propiedad | Descripción |
+|-----------|-------------|
+| `locationPermissionGranted` | Estado del permiso de ubicación |
+| `cameraPermissionGranted` | Estado del permiso de cámara |
+| `shareEventsEnabled` | Preferencia del usuario para compartir eventos |
+| `locationAuthorizationStatus` | Estado de autorización del sistema para ubicación |
+| `cameraAuthorizationStatus` | Estado de autorización del sistema para cámara |
+
+### Métodos Principales
+
+| Método | Descripción |
+|--------|-------------|
+| `requestLocationPermission() async -> Bool` | Solicita permiso de ubicación |
+| `requestCameraPermission() async -> Bool` | Solicita permiso de cámara |
+| `setShareEventsEnabled(_ enabled: Bool)` | Configura la preferencia de compartir |
+| `refreshAllPermissionStates()` | Actualiza todos los estados de permisos |
+
+### Flujo de Datos
+
+```
+┌─────────────────────────────────────┐
+│   PrivacySettingsManager            │
+│   (Fuente Única de Verdad)          │
+│   - locationPermissionGranted       │
+│   - cameraPermissionGranted         │
+│   - shareEventsEnabled              │
+└─────────────────┬───────────────────┘
+                  │ @Published (Combine)
+    ┌─────────────┼─────────────┐
+    ▼             ▼             ▼
+┌────────┐  ┌──────────┐  ┌───────────┐
+│Perfil  │  │  Mapas   │  │Detalle    │
+│ View   │  │  View    │  │  Evento   │
+└────────┘  └──────────┘  └───────────┘
+```
+
+### Integración en ViewModels
+
+Los ViewModels observan el manager centralizado mediante Combine:
+
+```swift
+// En ProfileViewModel, MapsViewModel
+privacySettings.$locationPermissionGranted
+    .receive(on: DispatchQueue.main)
+    .sink { [weak self] granted in
+        self?.locationPermissionGranted = granted
+    }
+    .store(in: &cancellables)
+
+privacySettings.$shareEventsEnabled
+    .receive(on: DispatchQueue.main)
+    .sink { [weak self] enabled in
+        self?.shareEventsEnabled = enabled
+    }
+    .store(in: &cancellables)
+```
+
+### Funcionalidades Sincronizadas
+
+| Vista | Funcionalidad | Permiso |
+|-------|---------------|---------|
+| Perfil | Toggle de ubicación | `locationPermissionGranted` |
+| Perfil | Toggle de cámara | `cameraPermissionGranted` |
+| Perfil | Toggle de compartir | `shareEventsEnabled` |
+| Mapas | Ubicación del usuario | `locationPermissionGranted` |
+| Detalle Evento | Botón compartir | `shareEventsEnabled` |
+| Perfil | Tomar foto de perfil | `cameraPermissionGranted` |
+
+### Comportamiento de Compartir
+
+Cuando el usuario desactiva "Compartir eventos" en Perfil, el botón de compartir en Detalle de Evento muestra un mensaje informativo:
+
+```swift
+func shareEvent() {
+    guard PrivacySettingsManager.shared.canShare else {
+        showAlert(
+            title: "Compartir desactivado",
+            message: "Puedes activar esta opción en tu perfil, sección Privacidad y permisos."
+        )
+        return
+    }
+    // ... continúa con el compartir
+}
+```
+
+## Configuración de Fecha Demo
+
+La aplicación utiliza una configuración centralizada para la fecha de demostración.
+
+### AppConfiguration
+
+Ubicación: `FestAragon/Services/AppConfiguration.swift`
+
+```swift
+enum AppConfiguration {
+    /// Fecha actual del sistema
+    static var demoDate: Date {
+        Date()
+    }
+    
+    /// Inicio del día de demo (00:00)
+    static var startOfDemoDay: Date
+    
+    /// Verifica si una fecha es pasada
+    static func isPastDate(_ date: Date) -> Bool
+    
+    /// Verifica si una fecha es hoy
+    static func isToday(_ date: Date) -> Bool
+    
+    /// Obtiene las próximas N fechas
+    static func upcomingDates(count: Int) -> [Date]
+}
+```
+
+### Uso en la Aplicación
+
+```swift
+// Verificar si un evento es pasado
+if AppConfiguration.isPastDate(event.date) {
+    // Mostrar overlay "Evento finalizado"
+}
+
+// Obtener eventos de hoy
+let todayEvents = events.filter { AppConfiguration.isToday($0.date) }
+
+// Obtener próximos 5 días
+let dates = AppConfiguration.upcomingDates(count: 5)
+```
+
 ## TRELLO
 https://trello.com/invite/b/6967b73bf1e99a8647f839c3/ATTIbe24d7173321ea67fc7ec88e7b7e4e5a623C257E/trabajo-grupal-ios

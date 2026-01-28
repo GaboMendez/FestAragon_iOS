@@ -13,12 +13,14 @@ class MapsViewModel: ObservableObject {
     @Published var selectedCategories: Set<EventCategory> = []
     @Published var showListView: Bool = false
     @Published var selectedEvent: Event?
+    @Published var locationPermissionGranted: Bool = false
     
     // User location (simulated for demo - Plaza del Pilar)
     let userLocation = CLLocation(latitude: 41.6561, longitude: -0.8779)
     
     private var cancellables = Set<AnyCancellable>()
     private let favoritesManager = FavoritesManager.shared
+    private let privacySettings = PrivacySettingsManager.shared
     
     // MARK: - Computed Properties
     
@@ -60,6 +62,14 @@ class MapsViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.syncFavoriteStatus()
+            }
+            .store(in: &cancellables)
+        
+        // Observe location permission changes from centralized manager
+        privacySettings.$locationPermissionGranted
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] granted in
+                self?.locationPermissionGranted = granted
             }
             .store(in: &cancellables)
         

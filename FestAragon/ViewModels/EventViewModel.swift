@@ -338,6 +338,15 @@ class EventViewModel: ObservableObject {
     }
     
     func shareEvent() {
+        // Check if sharing is enabled in privacy settings
+        guard PrivacySettingsManager.shared.canShare else {
+            showAlert(
+                title: "Compartir desactivado",
+                message: "Puedes activar esta opción en tu perfil, sección Privacidad y permisos."
+            )
+            return
+        }
+        
         let activityVC = UIActivityViewController(activityItems: [shareText], applicationActivities: nil)
         
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,

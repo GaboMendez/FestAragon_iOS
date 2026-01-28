@@ -393,6 +393,8 @@ struct PrivacyPermissionsSection: View {
                 Spacer()
                 
                 Toggle("", isOn: $viewModel.locationPermissionGranted)
+                    .labelsHidden()
+                    .tint(Color(red: 166/255, green: 47/255, blue: 54/255))
                     .onChange(of: viewModel.locationPermissionGranted) { _, isEnabled in
                         if isEnabled {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -424,6 +426,8 @@ struct PrivacyPermissionsSection: View {
                 Spacer()
                 
                 Toggle("", isOn: $viewModel.cameraPermissionGranted)
+                    .labelsHidden()
+                    .tint(Color(red: 166/255, green: 47/255, blue: 54/255))
                     .onChange(of: viewModel.cameraPermissionGranted) { _, isEnabled in
                         if isEnabled {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -455,6 +459,8 @@ struct PrivacyPermissionsSection: View {
                 Spacer()
                 
                 Toggle("", isOn: $viewModel.shareEventsEnabled)
+                    .labelsHidden()
+                    .tint(Color(red: 166/255, green: 47/255, blue: 54/255))
                     .onChange(of: viewModel.shareEventsEnabled) { _, newValue in
                         DispatchQueue.main.async {
                             viewModel.saveShareEventsPreference(newValue)

@@ -24,6 +24,7 @@ class ProfileViewModel: NSObject, ObservableObject {
     @Published var eventRemindersEnabled: Bool = false
     @Published var noticeTimeMinutes: Int = 15
     
+    // Privacy settings (observed from centralized manager)
     @Published var locationPermissionGranted: Bool = false
     @Published var cameraPermissionGranted: Bool = false
     @Published var shareEventsEnabled: Bool = true
@@ -31,6 +32,7 @@ class ProfileViewModel: NSObject, ObservableObject {
     // MARK: - Private Properties
     private let userDefaults = UserDefaults.standard
     private let notificationSettings = NotificationSettingsManager.shared
+    private let privacySettings = PrivacySettingsManager.shared
     private var cancellables = Set<AnyCancellable>()
     
     private let profileImageKey = "user_image_path"
@@ -38,19 +40,17 @@ class ProfileViewModel: NSObject, ObservableObject {
     private let userEmailKey = "user_email"
     private let userPhoneKey = "user_phone"
     private let userLocationKey = "user_location"
-    private let shareEventsKey = "share_events_enabled"
     
     override init() {
         super.init()
         loadUserData()
-        updatePermissionStates()
-        setupNotificationSettingsObserver()
+        setupSettingsObservers()
     }
     
-    // MARK: - Notification Settings Observer
+    // MARK: - Settings Observers
     
-    private func setupNotificationSettingsObserver() {
-        // Observe isEnabled changes from centralized manager
+    private func setupSettingsObservers() {
+        // Observe notification settings from centralized manager
         notificationSettings.$isEnabled
             .receive(on: DispatchQueue.main)
             .sink { [weak self] enabled in
@@ -58,11 +58,32 @@ class ProfileViewModel: NSObject, ObservableObject {
             }
             .store(in: &cancellables)
         
-        // Observe noticeTimeMinutes changes from centralized manager
         notificationSettings.$noticeTimeMinutes
             .receive(on: DispatchQueue.main)
             .sink { [weak self] minutes in
                 self?.noticeTimeMinutes = minutes
+            }
+            .store(in: &cancellables)
+        
+        // Observe privacy settings from centralized manager
+        privacySettings.$locationPermissionGranted
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] granted in
+                self?.locationPermissionGranted = granted
+            }
+            .store(in: &cancellables)
+        
+        privacySettings.$cameraPermissionGranted
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] granted in
+                self?.cameraPermissionGranted = granted
+            }
+            .store(in: &cancellables)
+        
+        privacySettings.$shareEventsEnabled
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] enabled in
+                self?.shareEventsEnabled = enabled
             }
             .store(in: &cancellables)
     }
@@ -75,10 +96,12 @@ class ProfileViewModel: NSObject, ObservableObject {
         userPhone = userDefaults.string(forKey: userPhoneKey) ?? "+34 612 345 678"
         userLocation = userDefaults.string(forKey: userLocationKey) ?? "Aragón, España"
         
-        // Sync notification settings from centralized manager
+        // Sync settings from centralized managers
         eventRemindersEnabled = notificationSettings.isEnabled
         noticeTimeMinutes = notificationSettings.noticeTimeMinutes
-        shareEventsEnabled = userDefaults.bool(forKey: shareEventsKey)
+        locationPermissionGranted = privacySettings.locationPermissionGranted
+        cameraPermissionGranted = privacySettings.cameraPermissionGranted
+        shareEventsEnabled = privacySettings.shareEventsEnabled
         
         // Load profile image
         if let imagePath = userDefaults.string(forKey: profileImageKey),
@@ -105,12 +128,7 @@ class ProfileViewModel: NSObject, ObservableObject {
     }
     
     func saveShareEventsPreference(_ enabled: Bool) {
-        do {
-            userDefaults.set(enabled, forKey: shareEventsKey)
-            userDefaults.synchronize()
-        } catch {
-            print("Error saving share events preference: \(error.localizedDescription)")
-        }
+        privacySettings.setShareEventsEnabled(enabled)
     }
     
     /// Set notice time in minutes (delegates to centralized manager)
@@ -144,63 +162,21 @@ class ProfileViewModel: NSObject, ObservableObject {
         }
     }
     
-    // MARK: - Permissions
+    // MARK: - Permissions (delegated to centralized manager)
     
     func updatePermissionStates() {
-        locationPermissionGranted = checkLocationPermission()
-        cameraPermissionGranted = checkCameraPermission()
-    }
-    
-    func checkLocationPermission() -> Bool {
-        let locationStatus = CLLocationManager().authorizationStatus
-        return locationStatus == .authorizedWhenInUse || locationStatus == .authorizedAlways
-    }
-    
-    func checkCameraPermission() -> Bool {
-        let cameraStatus = AVCaptureDevice.authorizationStatus(for: .video)
-        return cameraStatus == .authorized
-    }
-    
-    private func isCameraAvailable() -> Bool {
-        // Check if device has a camera
-        return UIImagePickerController.isSourceTypeAvailable(.camera)
+        privacySettings.refreshAllPermissionStates()
     }
     
     func checkAndRequestLocationPermission() {
-        let locationManager = CLLocationManager()
-        let status = locationManager.authorizationStatus
-        
-        if status == .notDetermined {
-            locationManager.requestWhenInUseAuthorization()
-            // Delay permission check to allow time for the user to respond
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                self?.locationPermissionGranted = self?.checkLocationPermission() ?? false
-            }
-        } else if status == .denied || status == .restricted {
-            DispatchQueue.main.async { [weak self] in
-                self?.locationPermissionGranted = false
-            }
-        } else {
-            DispatchQueue.main.async { [weak self] in
-                self?.locationPermissionGranted = true
-            }
+        Task {
+            await privacySettings.requestLocationPermission()
         }
     }
     
     func checkAndRequestCameraPermission() {
-        // First check if camera is available on device
-        guard isCameraAvailable() else {
-            DispatchQueue.main.async {
-                self.cameraPermissionGranted = false
-            }
-            return
-        }
-        
-        // Then request permission
-        AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
-            DispatchQueue.main.async {
-                self?.cameraPermissionGranted = granted
-            }
+        Task {
+            await privacySettings.requestCameraPermission()
         }
     }
     
