@@ -226,12 +226,12 @@ struct NotificationsSettingsSection: View {
                         .padding(.horizontal, 16)
                     
                     HStack(spacing: 12) {
-                        ForEach([5, 15, 30], id: \.self) { minutes in
+                        ForEach([15, 30, 1440], id: \.self) { minutes in
                             Button(action: {
                                 noticeMinutes = minutes
                                 onSettingsChanged()
                             }) {
-                                Text("\(minutes)m")
+                                Text(minutes == 1440 ? "1d" : "\(minutes)m")
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(noticeMinutes == minutes ? .white : Color(red: 166/255, green: 47/255, blue: 54/255))
                                     .frame(maxWidth: .infinity)
