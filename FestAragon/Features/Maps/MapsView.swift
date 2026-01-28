@@ -3,9 +3,11 @@ import MapKit
 
 struct MapsView: View {
     @StateObject private var viewModel = MapsViewModel()
-    @State private var mapRegion = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 41.6488, longitude: -0.8891),
-        span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+    @State private var mapPosition = MapCameraPosition.region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 41.6488, longitude: -0.8891),
+            span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+        )
     )
     
     var body: some View {
@@ -54,14 +56,16 @@ struct MapsView: View {
                 // Map Section - hide when in list view
                 if !viewModel.showListView {
                     ZStack(alignment: .topTrailing) {
-                        Map(coordinateRegion: $mapRegion, annotationItems: viewModel.mapEvents) { event in
-                            MapAnnotation(coordinate: event.coordinate) {
-                                EventMapMarker(
-                                    category: event.category,
-                                    isSelected: viewModel.selectedEvent?.id == event.id
-                                )
-                                .onTapGesture {
-                                    centerOnEvent(event)
+                        Map(position: $mapPosition) {
+                            ForEach(viewModel.mapEvents) { event in
+                                Annotation("", coordinate: event.coordinate) {
+                                    EventMapMarker(
+                                        category: event.category,
+                                        isSelected: viewModel.selectedEvent?.id == event.id
+                                    )
+                                    .onTapGesture {
+                                        centerOnEvent(event)
+                                    }
                                 }
                             }
                         }
@@ -256,36 +260,38 @@ struct MapsView: View {
     }
     
     // MARK: - Helper Methods
+    @State private var currentCenter = CLLocationCoordinate2D(latitude: 41.6488, longitude: -0.8891)
+    @State private var currentSpan = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
     
     private func zoomIn() {
-        mapRegion.span = MKCoordinateSpan(
-            latitudeDelta: max(mapRegion.span.latitudeDelta / 2, 0.002),
-            longitudeDelta: max(mapRegion.span.longitudeDelta / 2, 0.002)
+        currentSpan = MKCoordinateSpan(
+            latitudeDelta: max(currentSpan.latitudeDelta / 2, 0.002),
+            longitudeDelta: max(currentSpan.longitudeDelta / 2, 0.002)
         )
+        mapPosition = .region(MKCoordinateRegion(center: currentCenter, span: currentSpan))
         viewModel.selectedEvent = nil
     }
     
     private func zoomOut() {
-        mapRegion.span = MKCoordinateSpan(
-            latitudeDelta: min(mapRegion.span.latitudeDelta * 2, 0.5),
-            longitudeDelta: min(mapRegion.span.longitudeDelta * 2, 0.5)
+        currentSpan = MKCoordinateSpan(
+            latitudeDelta: min(currentSpan.latitudeDelta * 2, 0.5),
+            longitudeDelta: min(currentSpan.longitudeDelta * 2, 0.5)
         )
+        mapPosition = .region(MKCoordinateRegion(center: currentCenter, span: currentSpan))
         viewModel.selectedEvent = nil
     }
     
     private func centerOnEvent(_ event: Event) {
-        mapRegion = MKCoordinateRegion(
-            center: event.coordinate,
-            span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-        )
+        currentCenter = event.coordinate
+        currentSpan = MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+        mapPosition = .region(MKCoordinateRegion(center: currentCenter, span: currentSpan))
         viewModel.selectedEvent = event
     }
     
     private func centerOnUserLocation() {
-        mapRegion = MKCoordinateRegion(
-            center: viewModel.userLocation.coordinate,
-            span: MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-        )
+        currentCenter = viewModel.userLocation.coordinate
+        currentSpan = MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+        mapPosition = .region(MKCoordinateRegion(center: currentCenter, span: currentSpan))
     }
     
     private func legendTitle(for category: EventCategory) -> String {

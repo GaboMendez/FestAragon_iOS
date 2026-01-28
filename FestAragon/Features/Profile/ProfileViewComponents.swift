@@ -80,7 +80,7 @@ struct EditProfileDialog: View {
 }
 
 #Preview {
-    @State var isPresented = true
+    @Previewable @State var isPresented = true
     return EditProfileDialog(
         field: .name,
         viewModel: ProfileViewModel(),

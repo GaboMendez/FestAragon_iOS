@@ -185,9 +185,9 @@ class EventViewModel: ObservableObject {
     /// Schedule a reminder notification for this event using centralized settings
     func scheduleReminder() {
         Task {
-            // Check current authorization status
-            let status = await NotificationSettingsManager.shared.authorizationStatus
+            // Refresh and check current authorization status
             await NotificationSettingsManager.shared.refreshAuthorizationStatus()
+            let status = NotificationSettingsManager.shared.authorizationStatus
             
             switch status {
             case .denied:

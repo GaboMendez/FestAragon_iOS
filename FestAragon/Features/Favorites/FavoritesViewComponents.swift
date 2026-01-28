@@ -87,7 +87,7 @@ struct CachedAsyncImage: View {
         .onAppear {
             loader.load(from: urlString)
         }
-        .onChange(of: urlString) { newValue in
+        .onChange(of: urlString) { _, newValue in
             loader.load(from: newValue)
         }
     }
