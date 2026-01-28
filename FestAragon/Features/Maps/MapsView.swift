@@ -376,6 +376,8 @@ struct CategoryPill: View {
     var isSelected: Bool
     let action: () -> Void
     
+    private let themeColor = Color(red: 166/255, green: 47/255, blue: 54/255)
+    
     var body: some View {
         Button(action: action) {
             HStack(spacing: 6) {
@@ -387,7 +389,7 @@ struct CategoryPill: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .background(isSelected ? Color.primary : Color(.systemGray6))
+            .background(isSelected ? themeColor : Color(.systemGray6))
             .foregroundColor(isSelected ? .white : .primary)
             .cornerRadius(20)
         }
@@ -400,6 +402,13 @@ struct NearbyEventCard: View {
     let distance: String
     let onFavoriteToggle: () -> Void
     let onMapTap: () -> Void
+    
+    private var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "es_ES")
+        formatter.dateFormat = "EEE, d MMM"
+        return formatter.string(from: event.date).capitalized
+    }
     
     var body: some View {
         HStack(spacing: 12) {
@@ -441,6 +450,14 @@ struct NearbyEventCard: View {
                     Image(systemName: "mappin")
                         .font(.caption2)
                     Text("\(event.location) - \(distance)")
+                        .font(.caption)
+                }
+                .foregroundColor(.secondary)
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "calendar")
+                        .font(.caption2)
+                    Text(formattedDate)
                         .font(.caption)
                 }
                 .foregroundColor(.secondary)

@@ -73,7 +73,8 @@ class FavoritesViewModel: ObservableObject {
             favoriteIds.contains(event.jsonId)
         }
         
-        favoriteEvents = favorites.sorted { $0.date < $1.date }
+        // Sort from most recent to oldest
+        favoriteEvents = favorites.sorted { $0.date > $1.date }
     }
     
     // MARK: - Public Methods
