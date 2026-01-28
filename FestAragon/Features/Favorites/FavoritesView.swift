@@ -16,12 +16,10 @@ struct FavoritesView: View {
                             ProgressView()
                             Spacer()
                         }
-                    } else if viewModel.favoriteEvents.isEmpty {
-                        FavoritesEmptyState()
                     } else {
                         ScrollView {
                             VStack(spacing: 16) {
-                                // Notifications Settings
+                                // Notifications Settings - Always visible
                                 NotificationsSettingsSection(
                                     isEnabled: $viewModel.notificationsEnabled,
                                     noticeMinutes: $viewModel.noticeTimeMinutes,
@@ -34,24 +32,32 @@ struct FavoritesView: View {
                                 )
                                 .padding(.top, 16)
                                 
-                                // Favorited Events
-                                VStack(alignment: .leading, spacing: 12) {
-                                    Text("Tus eventos favoritos")
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
-                                        .padding(.horizontal, 16)
-                                    
-                                    ForEach(viewModel.favoriteEvents) { event in
-                                        EventCardWrapper(event: event) {
-                                            FavoriteEventCard(event: event) {
-                                                withAnimation(.easeInOut(duration: 0.2)) {
-                                                    viewModel.removeFavorite(event)
+                                if viewModel.favoriteEvents.isEmpty {
+                                    // Empty state below notifications - centered
+                                    FavoritesEmptyState()
+                                        .frame(maxWidth: .infinity)
+                                        .frame(minHeight: 300)
+                                        .padding(.top, 20)
+                                } else {
+                                    // Favorited Events
+                                    VStack(alignment: .leading, spacing: 12) {
+                                        Text("Tus eventos favoritos")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                                            .padding(.horizontal, 16)
+                                        
+                                        ForEach(viewModel.favoriteEvents) { event in
+                                            EventCardWrapper(event: event) {
+                                                FavoriteEventCard(event: event) {
+                                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                                        viewModel.removeFavorite(event)
+                                                    }
                                                 }
                                             }
                                         }
                                     }
+                                    .padding(.top, 8)
                                 }
-                                .padding(.top, 8)
                             }
                             .padding(.vertical, 16)
                         }
