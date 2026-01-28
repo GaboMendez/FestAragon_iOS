@@ -227,7 +227,7 @@ struct NotificationsSettingsSection: View {
                         .padding(.horizontal, 16)
                     
                     HStack(spacing: 12) {
-                        ForEach([15, 30, 1440], id: \.self) { minutes in
+                        ForEach([15, 30, 60, 1440], id: \.self) { minutes in
                             Button(action: {
                                 onNoticeTimeChanged(minutes)
                             }) {

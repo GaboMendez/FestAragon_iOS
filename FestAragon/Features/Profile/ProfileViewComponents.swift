@@ -135,7 +135,7 @@ struct NotificationsSection: View {
     @ObservedObject var viewModel: ProfileViewModel
     @State private var showingNoticeTimeAlert = false
     
-    let noticeTimeOptions = [(label: "10 min", value: 10), (label: "15 min", value: 15), (label: "30 min", value: 30), (label: "60 min", value: 60), (label: "1 día", value: 1440)]
+    let noticeTimeOptions = [(label: "15 min", value: 15), (label: "30 min", value: 30), (label: "60 min", value: 60), (label: "1 día", value: 1440)]
     
     var body: some View {
         VStack(spacing: 0) {
@@ -173,58 +173,6 @@ struct NotificationsSection: View {
                 Toggle("", isOn: $viewModel.eventRemindersEnabled)
                     .onChange(of: viewModel.eventRemindersEnabled) { _, isEnabled in
                         viewModel.setEventRemindersEnabled(isEnabled)
-                    }
-            }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 16)
-            
-            Divider()
-                .padding(.horizontal, 16)
-            
-            // Email Notifications
-            HStack(spacing: 16) {
-                Image(systemName: "envelope.fill")
-                    .font(.system(size: 18))
-                    .foregroundColor(.black)
-                    .frame(width: 24, alignment: .center)
-                
-                Text("Notificaciones por email")
-                    .font(.system(.body, design: .default))
-                    .foregroundColor(.primary)
-                
-                Spacer()
-                
-                Toggle("", isOn: $viewModel.emailNotificationsEnabled)
-                    .onChange(of: viewModel.emailNotificationsEnabled) { _, newValue in
-                        DispatchQueue.main.async {
-                            viewModel.saveEmailNotificationPreference(newValue)
-                        }
-                    }
-            }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 16)
-            
-            Divider()
-                .padding(.horizontal, 16)
-            
-            // Push Notifications
-            HStack(spacing: 16) {
-                Image(systemName: "bell.badge.fill")
-                    .font(.system(size: 18))
-                    .foregroundColor(.black)
-                    .frame(width: 24, alignment: .center)
-                
-                Text("Notificaciones push")
-                    .font(.system(.body, design: .default))
-                    .foregroundColor(.primary)
-                
-                Spacer()
-                
-                Toggle("", isOn: $viewModel.pushNotificationsEnabled)
-                    .onChange(of: viewModel.pushNotificationsEnabled) { _, newValue in
-                        DispatchQueue.main.async {
-                            viewModel.savePushNotificationPreference(newValue)
-                        }
                     }
             }
             .padding(.vertical, 8)

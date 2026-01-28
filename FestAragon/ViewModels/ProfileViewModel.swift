@@ -24,10 +24,6 @@ class ProfileViewModel: NSObject, ObservableObject {
     @Published var eventRemindersEnabled: Bool = false
     @Published var noticeTimeMinutes: Int = 15
     
-    // Other settings (local to profile)
-    @Published var emailNotificationsEnabled: Bool = false
-    @Published var pushNotificationsEnabled: Bool = true
-    
     @Published var locationPermissionGranted: Bool = false
     @Published var cameraPermissionGranted: Bool = false
     @Published var shareEventsEnabled: Bool = true
@@ -42,8 +38,6 @@ class ProfileViewModel: NSObject, ObservableObject {
     private let userEmailKey = "user_email"
     private let userPhoneKey = "user_phone"
     private let userLocationKey = "user_location"
-    private let emailNotifKey = "email_notifications_enabled"
-    private let pushNotifKey = "push_notifications_enabled"
     private let shareEventsKey = "share_events_enabled"
     
     override init() {
@@ -80,8 +74,6 @@ class ProfileViewModel: NSObject, ObservableObject {
         userEmail = userDefaults.string(forKey: userEmailKey) ?? "maria.garcia@email.com"
         userPhone = userDefaults.string(forKey: userPhoneKey) ?? "+34 612 345 678"
         userLocation = userDefaults.string(forKey: userLocationKey) ?? "Aragón, España"
-        emailNotificationsEnabled = userDefaults.bool(forKey: emailNotifKey)
-        pushNotificationsEnabled = userDefaults.bool(forKey: pushNotifKey)
         
         // Sync notification settings from centralized manager
         eventRemindersEnabled = notificationSettings.isEnabled
@@ -109,24 +101,6 @@ class ProfileViewModel: NSObject, ObservableObject {
         case .location:
             userLocation = value
             userDefaults.set(value, forKey: userLocationKey)
-        }
-    }
-    
-    func saveEmailNotificationPreference(_ enabled: Bool) {
-        do {
-            userDefaults.set(enabled, forKey: emailNotifKey)
-            userDefaults.synchronize()
-        } catch {
-            print("Error saving email notification preference: \(error.localizedDescription)")
-        }
-    }
-    
-    func savePushNotificationPreference(_ enabled: Bool) {
-        do {
-            userDefaults.set(enabled, forKey: pushNotifKey)
-            userDefaults.synchronize()
-        } catch {
-            print("Error saving push notification preference: \(error.localizedDescription)")
         }
     }
     

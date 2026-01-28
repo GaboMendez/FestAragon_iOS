@@ -128,6 +128,12 @@ class EventViewModel: ObservableObject {
         !videoItems.isEmpty
     }
     
+    /// Dynamic text for reminder button based on configured notice time
+    var reminderButtonText: String {
+        let timeText = NotificationSettingsManager.shared.noticeTimeFormatted
+        return "Recordarme \(timeText) antes"
+    }
+    
     // MARK: - Public Methods
     
     func selectMedia(_ item: MediaItem) {

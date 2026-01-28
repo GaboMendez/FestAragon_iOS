@@ -271,7 +271,7 @@ struct EventView: View {
                     } label: {
                         HStack {
                             Image(systemName: "bell.fill")
-                            Text("Recordarme 15 min antes")
+                            Text(viewModel.reminderButtonText)
                                 .fontWeight(.medium)
                         }
                         .foregroundColor(.white)

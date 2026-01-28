@@ -68,12 +68,12 @@ class NotificationManager: NSObject {
     ///   - event: El evento para el cual programar la notificación
     ///   - minutesBefore: Minutos antes del evento para enviar la notificación
     func scheduleEventNotification(event: Event, minutesBefore: Int) {
-        // Fecha de demo del proyecto: 21 de enero de 2026 a las 12:00
+        // Fecha de demo del proyecto: 28 de enero de 2026 a las 12:00
         let demoDate: Date = {
             var components = DateComponents()
             components.year = 2026
             components.month = 1
-            components.day = 21
+            components.day = 28
             components.hour = 12
             components.minute = 0
             return Calendar.current.date(from: components) ?? Date()

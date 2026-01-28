@@ -12,12 +12,12 @@ class HomeViewModel: ObservableObject {
     @Published var showPastEvents: Bool = false
     @Published var showSearchResults: Bool = false
     
-    // Fecha de demo fija: 21 de enero de 2026
+    // Fecha de demo fija: 28 de enero de 2026
     private let demoDate: Date = {
         var components = DateComponents()
         components.year = 2026
         components.month = 1
-        components.day = 21
+        components.day = 28
         components.hour = 12
         components.minute = 0
         return Calendar.current.date(from: components) ?? Date()
