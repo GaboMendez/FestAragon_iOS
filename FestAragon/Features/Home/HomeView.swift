@@ -33,6 +33,11 @@ struct HomeView: View {
                         TextField("Buscar evento, lugar...", text: $viewModel.searchText)
                             .font(.system(size: 16))
                             .foregroundColor(.primary)
+                            .onSubmit {
+                                if !viewModel.searchText.isEmpty {
+                                    viewModel.showSearchResults = true
+                                }
+                            }
                         
                         if !viewModel.searchText.isEmpty {
                             Button {

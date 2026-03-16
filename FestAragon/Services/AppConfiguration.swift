@@ -29,12 +29,12 @@ enum AppConfiguration {
     /// - Qué eventos se muestran como "hoy"
     /// - Qué eventos se consideran pasados
     /// - Las notificaciones programadas
-    static var demoDate: Date {
-        Date()
-    }
+    // static var demoDate: Date {
+       // Date()
+    // }
     
     /// Fecha fija de demo: 28 de enero de 2026 a las 12:00 PM
-    /*
+    
     static let demoDate: Date = {
         var components = DateComponents()
         components.year = 2026
@@ -44,7 +44,7 @@ enum AppConfiguration {
         components.minute = 0
         return Calendar.current.date(from: components) ?? Date()
     }()
-    */
+    
 
     /// Inicio del día de demo (00:00)
     static var startOfDemoDay: Date {

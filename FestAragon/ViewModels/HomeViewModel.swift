@@ -84,10 +84,16 @@ class HomeViewModel: ObservableObject {
         .sink { [weak self] _, _, _, _ in
             guard let self = self else { return }
             self.filterEvents()
-            // Defer the showSearchResults update to avoid publishing during view updates
-            let shouldShowResults = self.isSearching
-            if self.showSearchResults != shouldShowResults {
-                self.showSearchResults = shouldShowResults
+            // Only auto-show search results for category/date filters, not for text search
+            // Text search requires explicit submit (Enter key)
+            if self.selectedCategory != nil || self.selectedDate != nil {
+                let shouldShowResults = self.isSearching
+                if self.showSearchResults != shouldShowResults {
+                    self.showSearchResults = shouldShowResults
+                }
+            } else if self.searchText.isEmpty && self.showSearchResults {
+                // Hide search results when text is cleared
+                self.showSearchResults = false
             }
         }
         .store(in: &cancellables)
