@@ -47,7 +47,7 @@ class HomeViewModel: ObservableObject {
     
     // MARK: - Init
     init() {
-        loadEventsFromJSON()
+        loadEvents()
         setupSubscriptions()
     }
     
@@ -162,15 +162,15 @@ class HomeViewModel: ObservableObject {
         favoritesManager.toggleFavorite(eventId: event.jsonId)
     }
     
-    func loadEventsFromJSON() {
-        events = EventDataService.shared.loadEventsFromJSON()
+    func loadEvents() {
+        events = EventDataService.shared.loadEvents()
         filterEvents()
     }
     
     /// Refresca los eventos desde el servicio (sincroniza favoritos)
     func refreshEventsWithFavorites() {
         EventDataService.shared.reloadEvents()
-        events = EventDataService.shared.loadEventsFromJSON()
+        events = EventDataService.shared.loadEvents()
         filterEvents()
     }
     

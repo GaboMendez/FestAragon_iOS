@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct FestAragonApp: App {
@@ -13,5 +14,6 @@ struct FestAragonApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(EventDataService.shared.modelContainer)
     }
 }

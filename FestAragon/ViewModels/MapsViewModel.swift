@@ -38,7 +38,7 @@ class MapsViewModel: ObservableObject {
     
     // MARK: - Init
     init() {
-        loadEventsFromJSON()
+        loadEvents()
         setupSubscriptions()
     }
     
@@ -105,8 +105,8 @@ class MapsViewModel: ObservableObject {
         filteredEvents = result
     }
     
-    private func loadEventsFromJSON() {
-        events = EventDataService.shared.loadEventsFromJSON()
+    private func loadEvents() {
+        events = EventDataService.shared.loadEvents()
         filterEvents()
     }
     

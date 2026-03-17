@@ -115,4 +115,32 @@ enum EventCategory: String, Codable, CaseIterable {
     var displayName: String {
         self.rawValue
     }
+
+    var storageIdentifier: String {
+        switch self {
+        case .music:
+            return "musica"
+        case .cultural:
+            return "cultural"
+        case .infantil:
+            return "infantil"
+        case .traditional:
+            return "tradicional"
+        }
+    }
+
+    static func fromStorageIdentifier(_ identifier: String) -> EventCategory {
+        switch identifier {
+        case "musica":
+            return .music
+        case "cultural":
+            return .cultural
+        case "infantil":
+            return .infantil
+        case "tradicional":
+            return .traditional
+        default:
+            return .music
+        }
+    }
 }

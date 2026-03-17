@@ -171,7 +171,7 @@ final class NotificationManager: NSObject, ObservableObject {
     func rescheduleAllFavoriteNotifications() {
         guard isEnabled else { return }
         cancelAllNotifications()
-        let allEvents    = EventDataService.shared.loadEventsFromJSON()
+        let allEvents    = EventDataService.shared.loadEvents()
         let favoriteIds  = FavoritesManager.shared.getFavorites()
         allEvents
             .filter { favoriteIds.contains($0.jsonId) }
