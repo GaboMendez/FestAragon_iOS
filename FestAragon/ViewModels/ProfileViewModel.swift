@@ -31,7 +31,7 @@ class ProfileViewModel: NSObject, ObservableObject {
     
     // MARK: - Private Properties
     private let userDefaults = UserDefaults.standard
-    private let notificationSettings = NotificationSettingsManager.shared
+    private let notificationSettings = NotificationManager.shared
     private let privacySettings = PrivacySettingsManager.shared
     private var cancellables = Set<AnyCancellable>()
     

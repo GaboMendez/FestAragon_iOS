@@ -158,19 +158,8 @@ class HomeViewModel: ObservableObject {
     
     /// Alterna el estado de favorito de un evento
     func toggleFavorite(event: Event) {
-        let isFavorite = favoritesManager.toggleFavorite(eventId: event.jsonId)
-        
-        // Programar o cancelar notificación
-        let notificationsEnabled = UserDefaults.standard.bool(forKey: "favorites_notifications_enabled")
-        if notificationsEnabled {
-            if isFavorite {
-                // Programar notificación para el nuevo favorito
-                NotificationManager.shared.scheduleNotificationForNewFavorite(event: event)
-            } else {
-                // Cancelar notificación del favorito removido
-                NotificationManager.shared.cancelNotification(for: event.jsonId)
-            }
-        }
+        // FavoritesManager already calls NotificationManager.onFavoriteAdded/Removed internally
+        favoritesManager.toggleFavorite(eventId: event.jsonId)
     }
     
     func loadEventsFromJSON() {

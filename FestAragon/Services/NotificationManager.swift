@@ -2,254 +2,296 @@
 //  NotificationManager.swift
 //  FestAragon
 //
-//  Created by Gabriel Mendez Reyes on 14/1/26.
+//  Unified notification manager — single source of truth for
+//  both notification scheduling and notification settings.
 //
 
 import Foundation
 import UserNotifications
+import Combine
 
-/// Gestor de notificaciones locales para eventos
+/// Unified manager for local notifications and notification settings.
 ///
-/// **Cómo usar:**
+/// Single source of truth for:
+/// - User notification preferences (enabled, notice time)
+/// - System authorization state
+/// - Scheduling and cancelling event reminders
+///
+/// **Usage from ViewModels:**
 /// ```swift
-/// // Solicitar permisos
-/// await NotificationManager.shared.requestAuthorization()
+/// // Enable/disable
+/// await NotificationManager.shared.setNotificationsEnabled(true)
 ///
-/// // Programar notificación para un evento
-/// NotificationManager.shared.scheduleEventNotification(
-///     event: myEvent,
-///     minutesBefore: 30
-/// )
+/// // Change notice time (reschedules automatically)
+/// NotificationManager.shared.setNoticeTime(30)
 ///
-/// // Cancelar notificación de un evento
-/// NotificationManager.shared.cancelNotification(for: event.jsonId)
+/// // When a favorite is added/removed (FavoritesManager calls this automatically)
+/// NotificationManager.shared.onFavoriteAdded(event)
+/// NotificationManager.shared.onFavoriteRemoved(eventId: event.jsonId)
 ///
-/// // Reprogramar todas las notificaciones de favoritos
-/// NotificationManager.shared.rescheduleAllFavoriteNotifications(minutesBefore: 15)
+/// // Schedule reminder from event detail
+/// await NotificationManager.shared.scheduleReminderForEvent(event)
 /// ```
-class NotificationManager: NSObject {
+@MainActor
+final class NotificationManager: NSObject, ObservableObject {
     static let shared = NotificationManager()
-    
-    private let notificationCenter = UNUserNotificationCenter.current()
-    
+
+    // MARK: - Published State
+
+    /// Whether event reminders are enabled
+    @Published private(set) var isEnabled: Bool = false
+
+    /// Minutes before event to send notification
+    @Published private(set) var noticeTimeMinutes: Int = 15
+
+    /// Current system authorization status
+    @Published private(set) var authorizationStatus: UNAuthorizationStatus = .notDetermined
+
+    // MARK: - UserDefaults Keys (single source — no duplication)
+
+    private enum Keys {
+        static let notificationsEnabled = "notification_settings_enabled"
+        static let noticeTimeMinutes    = "notification_settings_notice_time"
+    }
+
+    private let center = UNUserNotificationCenter.current()
+
     override private init() {
         super.init()
-        notificationCenter.delegate = self
+        center.delegate = self
+        loadSettings()
+        Task { await refreshAuthorizationStatus() }
     }
-    
+
+    // MARK: - Settings
+
+    /// Enable or disable event reminders. Requests system permission if enabling.
+    /// - Returns: `true` if the new state was applied successfully.
+    @discardableResult
+    func setNotificationsEnabled(_ enabled: Bool) async -> Bool {
+        if enabled {
+            let granted = await requestAuthorization()
+            isEnabled = granted
+            UserDefaults.standard.set(granted, forKey: Keys.notificationsEnabled)
+            if granted { rescheduleAllFavoriteNotifications() }
+            return granted
+        } else {
+            isEnabled = false
+            UserDefaults.standard.set(false, forKey: Keys.notificationsEnabled)
+            cancelAllNotifications()
+            return true
+        }
+    }
+
+    /// Update notice time. Automatically reschedules all favorites if enabled.
+    func setNoticeTime(_ minutes: Int) {
+        guard minutes > 0 else { return }
+        noticeTimeMinutes = minutes
+        UserDefaults.standard.set(minutes, forKey: Keys.noticeTimeMinutes)
+        if isEnabled { rescheduleAllFavoriteNotifications() }
+    }
+
     // MARK: - Authorization
-    
-    /// Solicita permisos de notificación al usuario
-    /// - Returns: true si se concedieron los permisos
+
+    /// Request system notification permission.
     @discardableResult
     func requestAuthorization() async -> Bool {
         do {
-            // iOS 18 compatible: agregar .provisional para better UX
             let options: UNAuthorizationOptions = [.alert, .sound, .badge, .provisional]
-            let granted = try await notificationCenter.requestAuthorization(options: options)
-            print(granted ? "Permisos de notificación concedidos" : "Permisos de notificación denegados")
+            let granted = try await center.requestAuthorization(options: options)
+            await refreshAuthorizationStatus()
             return granted
         } catch {
-            print("Error solicitando permisos: \(error)")
+            print("Error requesting notification authorization: \(error)")
             return false
         }
     }
-    
-    /// Verifica el estado actual de los permisos de notificación
-    func checkAuthorizationStatus() async -> UNAuthorizationStatus {
-        let settings = await notificationCenter.notificationSettings()
-        return settings.authorizationStatus
+
+    /// Refresh `authorizationStatus` from the system. Disables if revoked externally.
+    func refreshAuthorizationStatus() async {
+        let settings = await center.notificationSettings()
+        authorizationStatus = settings.authorizationStatus
+        if authorizationStatus == .denied && isEnabled {
+            isEnabled = false
+            UserDefaults.standard.set(false, forKey: Keys.notificationsEnabled)
+        }
     }
-    
-    // MARK: - Schedule Notifications
-    
-    /// Programa una notificación para un evento
-    /// - Parameters:
-    ///   - event: El evento para el cual programar la notificación
-    ///   - minutesBefore: Minutos antes del evento para enviar la notificación
+
+    // MARK: - Scheduling
+
+    /// Schedule a notification for an event at `minutesBefore` minutes before it starts.
     func scheduleEventNotification(event: Event, minutesBefore: Int) {
-        // Verificar que el EVENTO sea en el futuro respecto a la fecha de demo
-        guard event.date > AppConfiguration.demoDate else {
-            print("El evento ya pasó respecto a la fecha de demo, no se programa notificación")
-            return
-        }
-        
-        // Calcular la fecha de la notificación
-        guard let notificationDate = Calendar.current.date(byAdding: .minute, value: -minutesBefore, to: event.date) else {
-            print("Error calculando fecha de notificación")
-            return
-        }
-        
-        // Configurar el contenido de la notificación
+        guard event.date > AppConfiguration.demoDate else { return }
+        guard let notificationDate = Calendar.current.date(
+            byAdding: .minute, value: -minutesBefore, to: event.date
+        ) else { return }
+
         let content = UNMutableNotificationContent()
         content.title = "Recordatorio de evento"
-        
-        // Formatear el tiempo de forma legible
-        let timeText: String
-        if minutesBefore >= 1440 {
-            let days = minutesBefore / 1440
-            timeText = days == 1 ? "mañana" : "en \(days) días"
-        } else if minutesBefore >= 60 {
-            let hours = minutesBefore / 60
-            timeText = "en \(hours) hora\(hours > 1 ? "s" : "")"
-        } else {
-            timeText = "en \(minutesBefore) minutos"
-        }
-        
-        content.body = "\(event.title) - Comienza \(timeText)"
+        content.body  = "\(event.title) - Comienza \(formatTimeText(minutesBefore))"
         content.sound = .default
         content.badge = 1
-        
-        // Información adicional
-        content.userInfo = [
-            "eventId": event.jsonId,
-            "eventTitle": event.title,
-            "eventDate": ISO8601DateFormatter().string(from: event.date),
-            "location": event.location
-        ]
-        
-        // Formatear hora de inicio para mostrar en la notificación
+
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "HH:mm"
-        let startTime = timeFormatter.string(from: event.date)
-        
-        content.subtitle = "Hora de inicio: \(startTime) - \(event.location)"
-        
-        // Crear el trigger: usar intervalo de tiempo para testing inmediato
-        let trigger: UNNotificationTrigger
-        if notificationDate < AppConfiguration.demoDate {
-            // Si la notificación debería haber sido antes, programarla para 10 segundos
-            trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
-            print("Notificación ajustada para demo: se enviará en 10 segundos")
-        } else {
-            // Calcular segundos hasta la notificación desde la fecha de demo
-            let timeInterval = notificationDate.timeIntervalSince(AppConfiguration.demoDate)
-            if timeInterval > 0 {
-                trigger = UNTimeIntervalNotificationTrigger(timeInterval: timeInterval, repeats: false)
-                print("Notificación programada para dentro de \(Int(timeInterval)) segundos")
-            } else {
-                // Si es negativo o cero, enviar en 10 segundos
-                trigger = UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
-                print("Notificación inmediata: se enviará en 10 segundos")
-            }
-        }
-        
-        // Crear la petición de notificación con el ID del evento
-        let identifier = "event_\(event.jsonId)"
-        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
-        
-        // Programar la notificación
-        notificationCenter.add(request) { error in
-            if let error = error {
-                print("Error programando notificación: \(error)")
-            } else {
-                print("Notificación programada para \(event.title) - \(minutesBefore) min antes")
-            }
+        content.subtitle = "Hora de inicio: \(timeFormatter.string(from: event.date)) - \(event.location)"
+
+        content.userInfo = [
+            "eventId":   event.jsonId,
+            "eventTitle": event.title,
+            "eventDate":  ISO8601DateFormatter().string(from: event.date),
+            "location":   event.location
+        ]
+
+        let trigger = makeTrigger(for: notificationDate)
+        let request = UNNotificationRequest(
+            identifier: notificationId(for: event.jsonId),
+            content: content,
+            trigger: trigger
+        )
+
+        center.add(request) { error in
+            if let error { print("Error scheduling notification: \(error)") }
         }
     }
-    
-    /// Cancela la notificación de un evento específico
-    /// - Parameter eventId: ID del evento (jsonId)
+
+    /// Cancel the pending notification for a specific event.
     func cancelNotification(for eventId: String) {
-        let identifier = "event_\(eventId)"
-        notificationCenter.removePendingNotificationRequests(withIdentifiers: [identifier])
-        print("Notificación cancelada para evento: \(eventId)")
+        center.removePendingNotificationRequests(withIdentifiers: [notificationId(for: eventId)])
     }
-    
-    /// Cancela todas las notificaciones programadas
+
+    /// Cancel all pending notifications.
     func cancelAllNotifications() {
-        notificationCenter.removeAllPendingNotificationRequests()
-        print("Todas las notificaciones canceladas")
+        center.removeAllPendingNotificationRequests()
     }
-    
-    // MARK: - Batch Operations
-    
-    /// Reprograma todas las notificaciones de eventos favoritos
-    /// - Parameter minutesBefore: Nuevo tiempo de aviso en minutos
-    func rescheduleAllFavoriteNotifications(minutesBefore: Int) {
-        // Primero cancelar todas las notificaciones existentes
+
+    // MARK: - Batch
+
+    /// Cancel and reschedule notifications for all favorited events.
+    func rescheduleAllFavoriteNotifications() {
+        guard isEnabled else { return }
         cancelAllNotifications()
-        
-        // Obtener eventos favoritos del JSON
-        let allEvents = EventDataService.shared.loadEventsFromJSON()
-        let favoriteIds = FavoritesManager.shared.getFavorites()
-        let favoriteEvents = allEvents.filter { favoriteIds.contains($0.jsonId) }
-        
-        // Programar notificaciones para cada favorito
-        for event in favoriteEvents {
-            scheduleEventNotification(event: event, minutesBefore: minutesBefore)
+        let allEvents    = EventDataService.shared.loadEventsFromJSON()
+        let favoriteIds  = FavoritesManager.shared.getFavorites()
+        allEvents
+            .filter { favoriteIds.contains($0.jsonId) }
+            .forEach { scheduleEventNotification(event: $0, minutesBefore: noticeTimeMinutes) }
+    }
+
+    // MARK: - Favorites convenience API (called by FavoritesManager)
+
+    /// Schedule a notification when a favorite is added (no-op if disabled).
+    func onFavoriteAdded(_ event: Event) {
+        guard isEnabled else { return }
+        scheduleEventNotification(event: event, minutesBefore: noticeTimeMinutes)
+    }
+
+    /// Cancel the notification when a favorite is removed.
+    func onFavoriteRemoved(eventId: String) {
+        cancelNotification(for: eventId)
+    }
+
+    // MARK: - Event detail reminder
+
+    /// Schedule a reminder from the event detail screen.
+    /// Handles authorization flow automatically.
+    /// - Returns: `true` if the notification was scheduled.
+    @discardableResult
+    func scheduleReminderForEvent(_ event: Event) async -> Bool {
+        await refreshAuthorizationStatus()
+        switch authorizationStatus {
+        case .denied:
+            return false
+        case .notDetermined:
+            let granted = await requestAuthorization()
+            guard granted else { return false }
+            scheduleEventNotification(event: event, minutesBefore: noticeTimeMinutes)
+            return true
+        default:
+            scheduleEventNotification(event: event, minutesBefore: noticeTimeMinutes)
+            return true
         }
-        
-        print("Reprogramadas \(favoriteEvents.count) notificaciones con \(minutesBefore) min de aviso")
     }
-    
-    /// Programa notificación para un nuevo evento favorito
-    /// - Parameters:
-    ///   - event: Evento a notificar
-    ///   - minutesBefore: Minutos de antelación (obtenido de UserDefaults)
-    func scheduleNotificationForNewFavorite(event: Event) {
-        let minutesBefore = UserDefaults.standard.integer(forKey: "noticeTimeMinutes")
-        let finalMinutes = minutesBefore > 0 ? minutesBefore : 15 // Default 15 min
-        scheduleEventNotification(event: event, minutesBefore: finalMinutes)
+
+    // MARK: - Display Helpers
+
+    /// Human-readable notice time (e.g. "30 min", "2 horas", "1 día").
+    var noticeTimeFormatted: String {
+        formatTimeText(noticeTimeMinutes)
     }
-    
-    // MARK: - Pending Notifications
-    
-    /// Obtiene todas las notificaciones pendientes
+
+    // MARK: - Debug
+
     func getPendingNotifications() async -> [UNNotificationRequest] {
-        return await notificationCenter.pendingNotificationRequests()
+        await center.pendingNotificationRequests()
     }
-    
-    /// Lista todas las notificaciones pendientes (útil para debug)
-    func listPendingNotifications() async {
-        let requests = await getPendingNotifications()
-        print("Notificaciones pendientes: \(requests.count)")
-        for request in requests {
-            if let trigger = request.trigger as? UNCalendarNotificationTrigger,
-               let nextTriggerDate = trigger.nextTriggerDate() {
-                print("  - \(request.identifier): \(request.content.title) -> \(nextTriggerDate)")
-            }
+
+    // MARK: - Private Helpers
+
+    private func loadSettings() {
+        isEnabled = UserDefaults.standard.bool(forKey: Keys.notificationsEnabled)
+        let saved = UserDefaults.standard.integer(forKey: Keys.noticeTimeMinutes)
+        noticeTimeMinutes = saved > 0 ? saved : 15
+    }
+
+    private func notificationId(for eventId: String) -> String {
+        "event_\(eventId)"
+    }
+
+    private func makeTrigger(for notificationDate: Date) -> UNNotificationTrigger {
+        if notificationDate < AppConfiguration.demoDate {
+            return UNTimeIntervalNotificationTrigger(timeInterval: 10, repeats: false)
+        }
+        let interval = notificationDate.timeIntervalSince(AppConfiguration.demoDate)
+        return UNTimeIntervalNotificationTrigger(timeInterval: max(interval, 10), repeats: false)
+    }
+
+    private func formatTimeText(_ minutes: Int) -> String {
+        if minutes >= 1440 {
+            let days = minutes / 1440
+            return days == 1 ? "mañana" : "en \(days) días"
+        } else if minutes >= 60 {
+            let hours = minutes / 60
+            return "en \(hours) hora\(hours > 1 ? "s" : "")"
+        } else {
+            return "en \(minutes) minutos"
         }
     }
 }
 
 // MARK: - UNUserNotificationCenterDelegate
+
 extension NotificationManager: UNUserNotificationCenterDelegate {
-    
-    /// Se llama cuando la app está en primer plano y llega una notificación
-    func userNotificationCenter(
+
+    /// Show notification banner even when the app is in the foreground.
+    nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
-        // Mostrar la notificación incluso cuando la app está abierta
-        // iOS 18 compatible: usar .list en lugar de .banner (que está deprecado)
-        if #available(iOS 14.0, *) {
-            completionHandler([.list, .sound, .badge])
-        } else {
-            completionHandler([.alert, .sound, .badge])
-        }
+        completionHandler([.list, .sound, .badge])
     }
-    
-    /// Se llama cuando el usuario interactúa con una notificación
-    func userNotificationCenter(
+
+    /// Handle tap on a notification — broadcasts `openEventDetails` so any listener can navigate.
+    nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
         let userInfo = response.notification.request.content.userInfo
-        
         if let eventId = userInfo["eventId"] as? String {
-            print("Usuario interactuó con notificación del evento: \(eventId)")
-            
-            // Aquí puedes navegar a la pantalla del evento
             NotificationCenter.default.post(
-                name: NSNotification.Name("OpenEventDetails"),
+                name: .openEventDetails,
                 object: nil,
                 userInfo: ["eventId": eventId]
             )
         }
-        
         completionHandler()
     }
+}
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let openEventDetails = Notification.Name("OpenEventDetails")
 }

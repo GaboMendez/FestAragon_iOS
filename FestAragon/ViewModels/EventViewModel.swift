@@ -130,7 +130,7 @@ class EventViewModel: ObservableObject {
     
     /// Dynamic text for reminder button based on configured notice time
     var reminderButtonText: String {
-        let timeText = NotificationSettingsManager.shared.noticeTimeFormatted
+        let timeText = NotificationManager.shared.noticeTimeFormatted
         return "Recordarme \(timeText) antes"
     }
     
@@ -182,30 +182,26 @@ class EventViewModel: ObservableObject {
     
     // MARK: - Reminder (Notifications)
     
-    /// Schedule a reminder notification for this event using centralized settings
+    /// Schedule a reminder notification for this event using the unified NotificationManager
     func scheduleReminder() {
         Task {
-            // Refresh and check current authorization status
-            await NotificationSettingsManager.shared.refreshAuthorizationStatus()
-            let status = NotificationSettingsManager.shared.authorizationStatus
-            
-            switch status {
-            case .denied:
+            let manager = NotificationManager.shared
+            let scheduled = await manager.scheduleReminderForEvent(event)
+
+            if scheduled {
                 showAlert(
-                    title: "Notificaciones desactivadas",
-                    message: "Para recibir recordatorios, activa las notificaciones en Ajustes.",
-                    showSettings: true
+                    title: "Recordatorio programado",
+                    message: "✅ Recibirás una notificación \(manager.noticeTimeFormatted) antes del evento."
                 )
-                
-            case .authorized, .provisional, .ephemeral:
-                // Already authorized - schedule using centralized manager
-                await scheduleReminderWithSettings()
-                
-            case .notDetermined:
-                // Request permission first
-                let granted = await NotificationSettingsManager.shared.requestAuthorization()
-                if granted {
-                    await scheduleReminderWithSettings()
+            } else {
+                // Authorization was denied
+                await manager.refreshAuthorizationStatus()
+                if manager.authorizationStatus == .denied {
+                    showAlert(
+                        title: "Notificaciones desactivadas",
+                        message: "Para recibir recordatorios, activa las notificaciones en Ajustes.",
+                        showSettings: true
+                    )
                 } else {
                     showAlert(
                         title: "Permiso denegado",
@@ -213,30 +209,8 @@ class EventViewModel: ObservableObject {
                         showSettings: true
                     )
                 }
-                
-            @unknown default:
-                await scheduleReminderWithSettings()
             }
         }
-    }
-    
-    /// Schedule reminder using centralized NotificationSettingsManager
-    private func scheduleReminderWithSettings() async {
-        let settings = NotificationSettingsManager.shared
-        let minutes = settings.noticeTimeMinutes
-        
-        // Use centralized notification manager
-        NotificationManager.shared.scheduleEventNotification(
-            event: event,
-            minutesBefore: minutes
-        )
-        
-        // Show confirmation with dynamic time
-        let timeText = settings.noticeTimeFormatted
-        showAlert(
-            title: "Recordatorio programado",
-            message: "✅ Recibirás una notificación \(timeText) antes del evento."
-        )
     }
     
     // MARK: - Calendar

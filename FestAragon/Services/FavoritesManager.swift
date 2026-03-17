@@ -20,7 +20,7 @@ import Combine
 /// ```
 ///
 /// Los favoritos se guardan automáticamente en UserDefaults y persisten entre sesiones de la app.
-/// Notificaciones se programan/cancelan automáticamente via NotificationSettingsManager.
+/// Notificaciones se programan/cancelan automáticamente via NotificationManager.
 class FavoritesManager: ObservableObject {
     static let shared = FavoritesManager()
     
@@ -59,7 +59,7 @@ class FavoritesManager: ObservableObject {
             saveFavorites()
             // Cancel notification for removed favorite
             Task { @MainActor in
-                NotificationSettingsManager.shared.onFavoriteRemoved(eventId: eventId)
+                NotificationManager.shared.onFavoriteRemoved(eventId: eventId)
             }
             return false
         } else {
@@ -68,7 +68,7 @@ class FavoritesManager: ObservableObject {
             // Schedule notification for new favorite
             if let event = getEvent(by: eventId) {
                 Task { @MainActor in
-                    NotificationSettingsManager.shared.onFavoriteAdded(event)
+                    NotificationManager.shared.onFavoriteAdded(event)
                 }
             }
             return true
@@ -83,7 +83,7 @@ class FavoritesManager: ObservableObject {
         // Schedule notification for new favorite
         if let event = getEvent(by: eventId) {
             Task { @MainActor in
-                NotificationSettingsManager.shared.onFavoriteAdded(event)
+                NotificationManager.shared.onFavoriteAdded(event)
             }
         }
     }
@@ -94,7 +94,7 @@ class FavoritesManager: ObservableObject {
         saveFavorites()
         // Cancel notification for removed favorite
         Task { @MainActor in
-            NotificationSettingsManager.shared.onFavoriteRemoved(eventId: eventId)
+            NotificationManager.shared.onFavoriteRemoved(eventId: eventId)
         }
     }
     
@@ -103,7 +103,9 @@ class FavoritesManager: ObservableObject {
         favoriteIds.removeAll()
         userDefaults.removeObject(forKey: favoritesKey)
         // Cancel all notifications when clearing favorites
-        NotificationManager.shared.cancelAllNotifications()
+        Task { @MainActor in
+            NotificationManager.shared.cancelAllNotifications()
+        }
     }
     
     /// Obtiene todos los IDs de eventos marcados como favoritos

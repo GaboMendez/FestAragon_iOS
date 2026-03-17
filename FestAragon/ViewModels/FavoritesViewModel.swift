@@ -16,7 +16,7 @@ class FavoritesViewModel: ObservableObject {
     // MARK: - Private Properties
     private let favoritesManager = FavoritesManager.shared
     private let eventDataService = EventDataService.shared
-    private let notificationSettings = NotificationSettingsManager.shared
+    private let notificationSettings = NotificationManager.shared
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Init
