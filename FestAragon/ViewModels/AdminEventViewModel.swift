@@ -6,8 +6,16 @@ extension Notification.Name {
     static let adminEventDataChanged = Notification.Name("AdminEventDataChanged")
 }
 
+enum AdminFormMode {
+    case create
+    case edit(Event)
+}
+
 @MainActor
 class AdminEventViewModel: ObservableObject {
+    // MARK: - Mode
+    let mode: AdminFormMode
+
     // MARK: - Editable Fields
     @Published var title: String
     @Published var eventDescription: String
@@ -35,12 +43,47 @@ class AdminEventViewModel: ObservableObject {
     // MARK: - Delete Confirmation
     @Published var showDeleteConfirmation = false
 
-    let eventJsonId: String
-    let eventTitle: String
+    var eventJsonId: String {
+        switch mode {
+        case .create: return ""
+        case .edit(let event): return event.jsonId
+        }
+    }
 
+    var eventTitle: String {
+        switch mode {
+        case .create: return ""
+        case .edit(let event): return event.title
+        }
+    }
+
+    var isCreating: Bool {
+        if case .create = mode { return true }
+        return false
+    }
+
+    // MARK: - Init (Create)
+    init() {
+        self.mode = .create
+        self.title = ""
+        self.eventDescription = ""
+        self.date = Date()
+        self.endDate = Date()
+        self.hasEndDate = false
+        self.category = .music
+        self.location = ""
+        self.address = ""
+        self.latitude = ""
+        self.longitude = ""
+        self.imageURL = ""
+        self.price = "0.00"
+        self.organizerName = ""
+        self.organizerEmail = ""
+    }
+
+    // MARK: - Init (Edit)
     init(event: Event) {
-        self.eventJsonId = event.jsonId
-        self.eventTitle = event.title
+        self.mode = .edit(event)
         self.title = event.title
         self.eventDescription = event.description
         self.date = event.date
@@ -74,9 +117,8 @@ class AdminEventViewModel: ObservableObject {
         let parsedPrice = Double(price) ?? 0.0
         let finalEndDate: Date? = hasEndDate ? endDate : nil
 
-        do {
-            try EventDataService.shared.updateEvent(
-                jsonId: eventJsonId,
+        if isCreating {
+            EventDataService.shared.createEvent(
                 title: title.trimmingCharacters(in: .whitespaces),
                 description: eventDescription,
                 date: date,
@@ -93,9 +135,31 @@ class AdminEventViewModel: ObservableObject {
             )
             didSave = true
             NotificationCenter.default.post(name: .adminEventDataChanged, object: nil)
-            showFeedback(title: "Éxito", message: "El evento se ha actualizado correctamente.", isError: false)
-        } catch {
-            showFeedback(title: "Error", message: error.localizedDescription, isError: true)
+            showFeedback(title: "Éxito", message: "El evento se ha creado correctamente.", isError: false)
+        } else {
+            do {
+                try EventDataService.shared.updateEvent(
+                    jsonId: eventJsonId,
+                    title: title.trimmingCharacters(in: .whitespaces),
+                    description: eventDescription,
+                    date: date,
+                    endDate: finalEndDate,
+                    categoryIdentifier: category.storageIdentifier,
+                    location: location.trimmingCharacters(in: .whitespaces),
+                    address: address,
+                    latitude: lat,
+                    longitude: lng,
+                    imageURL: imageURL.isEmpty ? nil : imageURL,
+                    price: parsedPrice,
+                    organizerName: organizerName,
+                    organizerEmail: organizerEmail
+                )
+                didSave = true
+                NotificationCenter.default.post(name: .adminEventDataChanged, object: nil)
+                showFeedback(title: "Éxito", message: "El evento se ha actualizado correctamente.", isError: false)
+            } catch {
+                showFeedback(title: "Error", message: error.localizedDescription, isError: true)
+            }
         }
     }
 

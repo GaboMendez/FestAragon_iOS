@@ -126,6 +126,46 @@ final class EventDataService {
 
     // MARK: - Admin CRUD Methods
 
+    @discardableResult
+    func createEvent(
+        title: String,
+        description: String,
+        date: Date,
+        endDate: Date?,
+        categoryIdentifier: String,
+        location: String,
+        address: String,
+        latitude: Double,
+        longitude: Double,
+        imageURL: String?,
+        price: Double,
+        organizerName: String,
+        organizerEmail: String
+    ) -> String {
+        let newId = UUID().uuidString
+        let entity = EventEntity(
+            jsonId: newId,
+            title: title,
+            eventDescription: description,
+            date: date,
+            endDate: endDate,
+            categoryIdentifier: categoryIdentifier,
+            location: location,
+            address: address,
+            latitude: latitude,
+            longitude: longitude,
+            imageURL: imageURL,
+            price: price,
+            isFavorite: false,
+            organizerIdentifier: newId,
+            organizerName: organizerName,
+            organizerEmail: organizerEmail
+        )
+        modelContext.insert(entity)
+        saveContext()
+        return newId
+    }
+
     func updateEvent(
         jsonId: String,
         title: String,

@@ -4,6 +4,12 @@ struct AdminEventFormView: View {
     @StateObject private var viewModel: AdminEventViewModel
     @Environment(\.dismiss) private var dismiss
 
+    /// Create mode
+    init() {
+        self._viewModel = StateObject(wrappedValue: AdminEventViewModel())
+    }
+
+    /// Edit mode
     init(event: Event) {
         self._viewModel = StateObject(wrappedValue: AdminEventViewModel(event: event))
     }
@@ -85,7 +91,7 @@ struct AdminEventFormView: View {
                     } label: {
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
-                            Text("Guardar cambios")
+                            Text(viewModel.isCreating ? "Crear evento" : "Guardar cambios")
                                 .fontWeight(.semibold)
                         }
                         .foregroundColor(.white)
@@ -96,20 +102,22 @@ struct AdminEventFormView: View {
                 }
 
                 // MARK: - Eliminar
-                Section {
-                    Button(role: .destructive) {
-                        viewModel.confirmDelete()
-                    } label: {
-                        HStack {
-                            Image(systemName: "trash.fill")
-                            Text("Eliminar evento")
-                                .fontWeight(.semibold)
+                if !viewModel.isCreating {
+                    Section {
+                        Button(role: .destructive) {
+                            viewModel.confirmDelete()
+                        } label: {
+                            HStack {
+                                Image(systemName: "trash.fill")
+                                Text("Eliminar evento")
+                                    .fontWeight(.semibold)
+                            }
+                            .frame(maxWidth: .infinity)
                         }
-                        .frame(maxWidth: .infinity)
                     }
                 }
             }
-            .navigationTitle("Editar Evento")
+            .navigationTitle(viewModel.isCreating ? "Nuevo Evento" : "Editar Evento")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
