@@ -56,10 +56,20 @@ class HomeViewModel: ObservableObject {
     init() {
         loadEvents()
         setupSubscriptions()
+        setupAdminChangeObserver()
     }
     
     // MARK: - Private Methods
     
+    private func setupAdminChangeObserver() {
+        NotificationCenter.default.publisher(for: .adminEventDataChanged)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.loadEvents()
+            }
+            .store(in: &cancellables)
+    }
+
     private func syncFavoriteStatus() {
         // Sync all events with current favorite status
         for index in events.indices {

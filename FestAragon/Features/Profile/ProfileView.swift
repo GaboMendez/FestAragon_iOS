@@ -4,10 +4,12 @@ import UIKit
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
+    @ObservedObject private var sessionManager = SessionManager.shared
     @State private var showingImagePicker = false
     @State private var showingCamera = false
     @State private var showingEditDialog = false
     @State private var editingField: ProfileEditField?
+    @State private var showLogoutConfirmation = false
     
     var body: some View {
         NavigationStack {
@@ -39,6 +41,17 @@ struct ProfileView: View {
                     // Privacy & Permissions Section
                     PrivacyPermissionsSection(viewModel: viewModel)
                     
+                    // Admin Section (only for admins)
+                    if sessionManager.isAdmin {
+                        AdminSection()
+                    }
+
+                    // Session Section
+                    SessionSection(
+                        currentRole: sessionManager.currentRole,
+                        showLogoutConfirmation: $showLogoutConfirmation
+                    )
+
                     Spacer(minLength: 20)
                 }
                 .padding(.horizontal, 12)
@@ -70,6 +83,18 @@ struct ProfileView: View {
         }
         .onAppear {
             viewModel.loadUserData()
+        }
+        .confirmationDialog(
+            "¿Cerrar sesión?",
+            isPresented: $showLogoutConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Cerrar sesión", role: .destructive) {
+                sessionManager.logout()
+            }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("Volverás a la pantalla de selección de modo.")
         }
     }
     
