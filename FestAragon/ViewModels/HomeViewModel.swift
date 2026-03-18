@@ -9,6 +9,7 @@ class HomeViewModel: ObservableObject {
     @Published var searchText: String = ""
     @Published var selectedCategory: EventCategory?
     @Published var selectedDate: Date?
+    @Published var selectedLocalities: Set<String> = []
     @Published var showPastEvents: Bool = false
     @Published var showSearchResults: Bool = false
     
@@ -19,6 +20,12 @@ class HomeViewModel: ObservableObject {
     // MARK: - Computed Properties
     var availableDates: [Date] {
         AppConfiguration.upcomingDates(count: 5)
+    }
+    
+    /// Todas las localidades únicas disponibles en los eventos
+    var availableLocalities: [String] {
+        let allLocalities = events.map { $0.location }.uniqued()
+        return allLocalities.sorted()
     }
     
     var categorizedEvents: [EventCategory: [Event]] {
@@ -33,7 +40,7 @@ class HomeViewModel: ObservableObject {
     
     // Determina si el usuario está buscando/filtrando
     var isSearching: Bool {
-        !searchText.isEmpty || selectedCategory != nil || selectedDate != nil
+        !searchText.isEmpty || selectedCategory != nil || selectedDate != nil || !selectedLocalities.isEmpty
     }
     
     // Eventos a mostrar: resultados filtrados si está buscando, eventos de hoy si no
@@ -73,20 +80,21 @@ class HomeViewModel: ObservableObject {
             .store(in: &cancellables)
         
         // Filtrar eventos cuando cambian los parámetros de búsqueda
-        Publishers.CombineLatest4(
+        Publishers.CombineLatest5(
             $searchText,
             $selectedCategory,
             $selectedDate,
+            $selectedLocalities,
             $showPastEvents
         )
         .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
         .receive(on: DispatchQueue.main)
-        .sink { [weak self] _, _, _, _ in
+        .sink { [weak self] _, _, _, _, _ in
             guard let self = self else { return }
             self.filterEvents()
-            // Only auto-show search results for category/date filters, not for text search
+            // Only auto-show search results for category/date/locality filters, not for text search
             // Text search requires explicit submit (Enter key)
-            if self.selectedCategory != nil || self.selectedDate != nil {
+            if self.selectedCategory != nil || self.selectedDate != nil || !self.selectedLocalities.isEmpty {
                 let shouldShowResults = self.isSearching
                 if self.showSearchResults != shouldShowResults {
                     self.showSearchResults = shouldShowResults
@@ -134,6 +142,11 @@ class HomeViewModel: ObservableObject {
             result = result.filter { calendar.isDate($0.date, inSameDayAs: date) }
         }
         
+        // Filtrar por localidades (relación 1:N - un evento puede tener múltiples localidades buscadas)
+        if !selectedLocalities.isEmpty {
+            result = result.filter { selectedLocalities.contains($0.location) }
+        }
+        
         // Ordenar por fecha: más recientes primero
         filteredEvents = result.sorted { $0.date > $1.date }
     }
@@ -153,6 +166,15 @@ class HomeViewModel: ObservableObject {
             selectedDate = nil
         } else {
             selectedDate = date
+        }
+    }
+    
+    /// Alterna la selección de una localidad
+    func toggleLocality(_ locality: String) {
+        if selectedLocalities.contains(locality) {
+            selectedLocalities.remove(locality)
+        } else {
+            selectedLocalities.insert(locality)
         }
     }
     
@@ -192,6 +214,11 @@ class HomeViewModel: ObservableObject {
             filters.append("Fecha: \(formatter.string(from: date))")
         }
         
+        // Agregar filtros de localidades
+        for locality in selectedLocalities.sorted() {
+            filters.append("Localidad: \(locality)")
+        }
+        
         return filters
     }
     
@@ -202,6 +229,12 @@ class HomeViewModel: ObservableObject {
             selectedCategory = nil
         } else if filterDescription.starts(with: "Fecha:") {
             selectedDate = nil
+        } else if filterDescription.starts(with: "Localidad:") {
+            let parts = filterDescription.split(separator: ":", maxSplits: 1)
+            if parts.count == 2 {
+                let locality = String(parts[1]).trimmingCharacters(in: .whitespaces)
+                selectedLocalities.remove(locality)
+            }
         }
     }
     
@@ -209,6 +242,7 @@ class HomeViewModel: ObservableObject {
         searchText = ""
         selectedCategory = nil
         selectedDate = nil
+        selectedLocalities.removeAll()
         showSearchResults = false
     }
 }

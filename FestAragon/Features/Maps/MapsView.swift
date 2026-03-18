@@ -14,14 +14,31 @@ struct MapsView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Search bar - only show in map view
-                if !viewModel.showListView {
+                if !viewModel.showListView && viewModel.selectedLocality == nil {
                     MapSearchBar(searchText: $viewModel.searchText)
                 }
                 
-                // Map Section - hide when in list view
-                if !viewModel.showListView {
+                // Map Section - hide when in list view or locality selected
+                if !viewModel.showListView && viewModel.selectedLocality == nil {
                     ZStack(alignment: .topTrailing) {
                         Map(position: $mapPosition) {
+                            // Anotaciones de localidades
+                            ForEach(viewModel.availableLocalities, id: \.name) { locality in
+                                Annotation("", coordinate: locality.center) {
+                                    LocalityMapMarker(
+                                        locality: locality.name,
+                                        eventCount: viewModel.eventCountInLocality(locality.name),
+                                        isSelected: viewModel.selectedLocality == locality.name
+                                    )
+                                    .onTapGesture {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                            viewModel.selectLocality(locality.name)
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Anotaciones de eventos individuales
                             ForEach(viewModel.mapEvents) { event in
                                 Annotation("", coordinate: event.coordinate) {
                                     EventMapMarker(
@@ -176,6 +193,12 @@ struct MapsView: View {
             .toolbarBackground(Color(red: 166/255, green: 47/255, blue: 54/255), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .background(Color(red: 250/255, green: 245/255, blue: 235/255))
+            .navigationDestination(isPresented: Binding(
+                get: { viewModel.selectedLocality != nil },
+                set: { if !$0 { viewModel.deselectLocality() } }
+            )) {
+                LocalityEventsView(viewModel: viewModel)
+            }
         }
     }
     

@@ -13,6 +13,7 @@ class MapsViewModel: ObservableObject {
     @Published var selectedCategories: Set<EventCategory> = []
     @Published var showListView: Bool = false
     @Published var selectedEvent: Event?
+    @Published var selectedLocality: String?
     @Published var locationPermissionGranted: Bool = false
     
     // User location (simulated for demo - Plaza del Pilar)
@@ -27,6 +28,26 @@ class MapsViewModel: ObservableObject {
     /// Events to display on the map (filtered by category if any selected)
     var mapEvents: [Event] {
         filteredEvents
+    }
+    
+    /// Todas las localidades únicas disponibles
+    var availableLocalities: [(name: String, center: CLLocationCoordinate2D)] {
+        let uniqueLocalities = Set(events.map { $0.location })
+        return uniqueLocalities.sorted().map { locality in
+            let eventsInLocality = events.filter { $0.location == locality }
+            
+            // Calcular centro de la localidad basado en el promedio de coordenadas de sus eventos
+            let avgLat = eventsInLocality.map { $0.latitude }.reduce(0, +) / Double(eventsInLocality.count)
+            let avgLng = eventsInLocality.map { $0.longitude }.reduce(0, +) / Double(eventsInLocality.count)
+            
+            return (name: locality, center: CLLocationCoordinate2D(latitude: avgLat, longitude: avgLng))
+        }
+    }
+    
+    /// Eventos de la localidad seleccionada
+    var eventsInSelectedLocality: [Event] {
+        guard let locality = selectedLocality else { return [] }
+        return events.filter { $0.location == locality }
     }
     
     /// Events sorted by distance from user
@@ -193,5 +214,21 @@ class MapsViewModel: ObservableObject {
         case .traditional:
             return "TradicionalColor"
         }
+    }
+    
+    /// Obtener el conteo de eventos en una localidad
+    func eventCountInLocality(_ locality: String) -> Int {
+        events.filter { $0.location == locality }.count
+    }
+    
+    /// Seleccionar una localidad
+    func selectLocality(_ locality: String) {
+        selectedLocality = locality
+        selectedEvent = nil
+    }
+    
+    /// Deseleccionar la localidad actual
+    func deselectLocality() {
+        selectedLocality = nil
     }
 }

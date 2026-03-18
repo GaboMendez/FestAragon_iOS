@@ -117,6 +117,40 @@ struct HomeView: View {
                         }
                     }
                     
+                    // Localidades
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Localidades")
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                            .padding(.horizontal)
+                        
+                        if viewModel.availableLocalities.isEmpty {
+                            Text("No hay localidades disponibles")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                                .padding()
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            LazyVGrid(columns: [
+                                GridItem(.flexible()),
+                                GridItem(.flexible())
+                            ], spacing: 12) {
+                                ForEach(viewModel.availableLocalities, id: \.self) { locality in
+                                    LocalityButton(
+                                        title: locality,
+                                        isSelected: viewModel.selectedLocalities.contains(locality)
+                                    ) {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                            viewModel.toggleLocality(locality)
+                                        }
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
+                    
                     // Eventos de Hoy
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Eventos de Hoy")
@@ -300,6 +334,32 @@ struct EventCard: View {
         .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
         .padding(.horizontal, 16)
         .padding(.vertical, 6)
+    }
+}
+
+// MARK: - Locality Button
+struct LocalityButton: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(.black)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color(red: 235/255, green: 235/255, blue: 235/255))
+                .cornerRadius(20)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(isSelected ? Color(red: 166/255, green: 47/255, blue: 54/255) : Color.clear, lineWidth: 2)
+                )
+                .scaleEffect(isSelected ? 1.02 : 1.0)
+        }
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
     }
 }
 
