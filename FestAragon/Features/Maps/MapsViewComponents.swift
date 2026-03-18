@@ -534,3 +534,40 @@ struct CategoryFiltersSection: View {
         }
     }
 }
+// MARK: - Locality Map Marker
+struct LocalityMapMarker: View {
+    let locality: String
+    let eventCount: Int
+    var isSelected: Bool = false
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            ZStack {
+                // Background circle
+                Circle()
+                    .fill(isSelected ? Color(red: 166/255, green: 47/255, blue: 54/255) : Color.white)
+                    .frame(width: isSelected ? 50 : 40, height: isSelected ? 50 : 40)
+                    .shadow(color: Color(red: 166/255, green: 47/255, blue: 54/255).opacity(0.4), radius: isSelected ? 8 : 4, x: 0, y: 2)
+                
+                // Event count text
+                VStack(spacing: 2) {
+                    Text("\(eventCount)")
+                        .font(.system(size: isSelected ? 18 : 14, weight: .bold))
+                        .foregroundColor(isSelected ? .white : Color(red: 166/255, green: 47/255, blue: 54/255))
+                    
+                    Text("evento\(eventCount == 1 ? "" : "s")")
+                        .font(.system(size: isSelected ? 8 : 7, weight: .semibold))
+                        .foregroundColor(isSelected ? .white : Color(red: 166/255, green: 47/255, blue: 54/255))
+                }
+            }
+            
+            // Marker point
+            Triangle()
+                .fill(isSelected ? Color(red: 166/255, green: 47/255, blue: 54/255) : Color.white)
+                .frame(width: 12, height: 8)
+                .offset(y: -2)
+        }
+        .scaleEffect(isSelected ? 1.2 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
+    }
+}

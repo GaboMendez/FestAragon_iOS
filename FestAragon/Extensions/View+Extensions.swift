@@ -26,3 +26,18 @@ struct RoundedCorner: Shape {
         return Path(path.cgPath)
     }
 }
+// MARK: - Array Extension
+extension Array where Element: Hashable {
+    /// Retorna un array sin elementos duplicados, manteniendo el orden original
+    func uniqued() -> [Element] {
+        var seen = Set<Element>()
+        var result: [Element] = []
+        for element in self {
+            if !seen.contains(element) {
+                seen.insert(element)
+                result.append(element)
+            }
+        }
+        return result
+    }
+}
