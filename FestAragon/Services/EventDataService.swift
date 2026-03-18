@@ -1,6 +1,20 @@
 import Foundation
 import SwiftData
 
+enum AdminError: LocalizedError {
+    case eventNotFound
+    case deleteFailed(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .eventNotFound:
+            return "No se encontró el evento"
+        case .deleteFailed(let reason):
+            return "Error al eliminar: \(reason)"
+        }
+    }
+}
+
 @MainActor
 final class EventDataService {
     static let shared = EventDataService()
@@ -25,7 +39,7 @@ final class EventDataService {
                 MediaItemEntity.self,
                 configurations: configuration
             )
-            syncSeedDataFromBundle()
+            seedIfNeeded()
         } catch {
             fatalError("Failed to initialize SwiftData container: \(error)")
         }
@@ -45,6 +59,23 @@ final class EventDataService {
 
     /// Syncs bundled seed JSON into SwiftData, preserving persisted favorites.
     func reloadEvents() {
+        // No longer re-imports from JSON to preserve admin changes.
+        // Data is already in SwiftData; just trigger a re-read via loadEvents().
+    }
+
+    // MARK: - Seed Control
+
+    private static let seedImportedKey = "seed_data_imported"
+
+    /// Import seed data only once. Subsequent launches preserve admin changes.
+    private func seedIfNeeded() {
+        guard !UserDefaults.standard.bool(forKey: Self.seedImportedKey) else { return }
+        syncSeedDataFromBundle()
+        UserDefaults.standard.set(true, forKey: Self.seedImportedKey)
+    }
+
+    /// Force re-import seed data (overwrites all admin changes — use with caution).
+    func forceReseed() {
         syncSeedDataFromBundle()
     }
 
@@ -91,6 +122,101 @@ final class EventDataService {
             event.isFavorite = false
         }
         saveContext()
+    }
+
+    // MARK: - Admin CRUD Methods
+
+    func updateEvent(
+        jsonId: String,
+        title: String,
+        description: String,
+        date: Date,
+        endDate: Date?,
+        categoryIdentifier: String,
+        location: String,
+        address: String,
+        latitude: Double,
+        longitude: Double,
+        imageURL: String?,
+        price: Double,
+        organizerName: String,
+        organizerEmail: String
+    ) throws {
+        guard let entity = fetchEventEntity(by: jsonId) else {
+            throw AdminError.eventNotFound
+        }
+        entity.title = title
+        entity.eventDescription = description
+        entity.date = date
+        entity.endDate = endDate
+        entity.categoryIdentifier = categoryIdentifier
+        entity.location = location
+        entity.address = address
+        entity.latitude = latitude
+        entity.longitude = longitude
+        entity.imageURL = imageURL
+        entity.price = price
+        entity.organizerName = organizerName
+        entity.organizerEmail = organizerEmail
+        saveContext()
+    }
+
+    func deleteEvent(jsonId: String) throws {
+        guard let entity = fetchEventEntity(by: jsonId) else {
+            throw AdminError.eventNotFound
+        }
+        let wasFavorite = entity.isFavorite
+        // Cascade: delete media items first
+        for item in entity.mediaItems {
+            modelContext.delete(item)
+        }
+        modelContext.delete(entity)
+        saveContext()
+
+        if wasFavorite {
+            NotificationManager.shared.cancelNotification(for: jsonId)
+        }
+    }
+
+    func deleteEventsByLocation(_ location: String) throws -> Int {
+        let predicate = #Predicate<EventEntity> { entity in
+            entity.location == location
+        }
+        let descriptor = FetchDescriptor<EventEntity>(predicate: predicate)
+
+        let entities: [EventEntity]
+        do {
+            entities = try modelContext.fetch(descriptor)
+        } catch {
+            throw AdminError.deleteFailed(error.localizedDescription)
+        }
+
+        guard !entities.isEmpty else { return 0 }
+
+        let count = entities.count
+        for entity in entities {
+            if entity.isFavorite {
+                NotificationManager.shared.cancelNotification(for: entity.jsonId)
+            }
+            // Cascade: delete media items first
+            for item in entity.mediaItems {
+                modelContext.delete(item)
+            }
+            modelContext.delete(entity)
+        }
+        saveContext()
+        return count
+    }
+
+    func allLocations() -> [(name: String, count: Int)] {
+        let entities = fetchEventEntities()
+        var locationCounts: [String: Int] = [:]
+        for entity in entities {
+            locationCounts[entity.location, default: 0] += 1
+        }
+        return locationCounts
+            .map { (name: $0.key, count: $0.value) }
+            .sorted { $0.name < $1.name }
     }
 
     // MARK: - Private Methods

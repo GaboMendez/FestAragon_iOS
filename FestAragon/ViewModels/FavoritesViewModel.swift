@@ -33,10 +33,22 @@ class FavoritesViewModel: ObservableObject {
         
         // Observe notification settings changes from centralized manager
         setupNotificationSettingsObserver()
+
+        // Observe admin changes
+        setupAdminChangeObserver()
     }
     
     // MARK: - Private Methods
     
+    private func setupAdminChangeObserver() {
+        NotificationCenter.default.publisher(for: .adminEventDataChanged)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.loadFavorites()
+            }
+            .store(in: &cancellables)
+    }
+
     private func setupFavoritesObserver() {
         favoritesManager.$favoriteIds
             .dropFirst() // Skip initial value since we already loaded

@@ -11,6 +11,8 @@ import MapKit
 struct EventView: View {
     @StateObject private var viewModel: EventViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var showAdminForm = false
+    private let sessionManager = SessionManager.shared
     
     init(event: Event) {
         self._viewModel = StateObject(wrappedValue: EventViewModel(event: event))
@@ -348,13 +350,29 @@ struct EventView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    viewModel.toggleFavorite()
-                } label: {
-                    Image(systemName: viewModel.isFavorite ? "star.fill" : "star")
-                        .foregroundColor(viewModel.isFavorite ? .yellow : .gray)
+                HStack(spacing: 12) {
+                    if sessionManager.isAdmin {
+                        Button {
+                            showAdminForm = true
+                        } label: {
+                            Image(systemName: "pencil.circle.fill")
+                                .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                        }
+                    }
+                    Button {
+                        viewModel.toggleFavorite()
+                    } label: {
+                        Image(systemName: viewModel.isFavorite ? "star.fill" : "star")
+                            .foregroundColor(viewModel.isFavorite ? .yellow : .gray)
+                    }
                 }
             }
+        }
+        .sheet(isPresented: $showAdminForm) {
+            AdminEventFormView(event: viewModel.event)
+        }
+        .onChange(of: viewModel.eventWasDeleted) { _, deleted in
+            if deleted { dismiss() }
         }
         .alert(viewModel.alertTitle, isPresented: $viewModel.showingAlert) {
             Button("OK", role: .cancel) { }

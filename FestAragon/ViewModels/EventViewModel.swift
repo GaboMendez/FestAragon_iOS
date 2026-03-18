@@ -39,11 +39,15 @@ class EventViewModel: ObservableObject {
         event.organizadorEmail
     }
     
+    /// Set to true when the event has been deleted and the view should dismiss
+    @Published var eventWasDeleted: Bool = false
+
     // MARK: - Init
     init(event: Event) {
         self.event = event
         self.isFavorite = favoritesManager.isFavorite(eventId: event.jsonId)
         setupFavoritesObserver()
+        setupAdminChangeObserver()
     }
     
     // MARK: - Private Methods
@@ -56,6 +60,25 @@ class EventViewModel: ObservableObject {
                 self.isFavorite = favoriteIds.contains(self.event.jsonId)
             }
             .store(in: &cancellables)
+    }
+
+    private func setupAdminChangeObserver() {
+        NotificationCenter.default.publisher(for: .adminEventDataChanged)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.reloadEvent()
+            }
+            .store(in: &cancellables)
+    }
+
+    /// Reload event from SwiftData. If deleted, flags for dismissal.
+    func reloadEvent() {
+        if let updated = EventDataService.shared.event(by: event.jsonId) {
+            event = updated
+            isFavorite = favoritesManager.isFavorite(eventId: event.jsonId)
+        } else {
+            eventWasDeleted = true
+        }
     }
     
     // MARK: - Computed Properties
