@@ -80,16 +80,16 @@ class HomeViewModel: ObservableObject {
             .store(in: &cancellables)
         
         // Filtrar eventos cuando cambian los parámetros de búsqueda
-        Publishers.CombineLatest5(
+        Publishers.CombineLatest4(
             $searchText,
             $selectedCategory,
             $selectedDate,
-            $selectedLocalities,
-            $showPastEvents
+            $selectedLocalities
         )
+        .combineLatest($showPastEvents)
         .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
         .receive(on: DispatchQueue.main)
-        .sink { [weak self] _, _, _, _, _ in
+        .sink { [weak self] (_, _) in
             guard let self = self else { return }
             self.filterEvents()
             // Only auto-show search results for category/date/locality filters, not for text search

@@ -27,7 +27,7 @@ struct RoundedCorner: Shape {
     }
 }
 // MARK: - Array Extension
-extension Array where Element: Equatable {
+extension Array where Element: Hashable {
     /// Retorna un array sin elementos duplicados, manteniendo el orden original
     func uniqued() -> [Element] {
         var seen = Set<Element>()
