@@ -2,6 +2,8 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
+    private let sessionManager = SessionManager.shared
+    @State private var showCreateEventForm = false
     @Namespace private var animation
     
     var body: some View {
@@ -189,6 +191,22 @@ struct HomeView: View {
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                 }
+            }
+            .toolbar {
+                if sessionManager.isAdmin {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button {
+                            showCreateEventForm = true
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 20))
+                                .foregroundColor(.white)
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $showCreateEventForm) {
+                AdminEventFormView()
             }
             .toolbarBackground(Color(red: 166/255, green: 47/255, blue: 54/255), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)

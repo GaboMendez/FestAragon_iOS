@@ -573,3 +573,138 @@ struct ProfileHeaderView: View {
     )
     .padding()
 }
+
+// MARK: - Session Section
+struct SessionSection: View {
+    let currentRole: UserRole?
+    @Binding var showLogoutConfirmation: Bool
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("Sesión")
+                    .font(.system(.headline, design: .default))
+                    .fontWeight(.bold)
+                Spacer()
+            }
+            .padding(16)
+
+            Divider()
+                .padding(.horizontal, 16)
+
+            // Current role indicator
+            HStack(spacing: 16) {
+                Image(systemName: currentRole == .admin ? "shield.fill" : "person.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(currentRole == .admin ? Color(red: 166/255, green: 47/255, blue: 54/255) : .blue)
+                    .frame(width: 24, alignment: .center)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Modo actual")
+                        .font(.system(.body, design: .default))
+                        .foregroundColor(.primary)
+                    Text(currentRole == .admin ? "Administrador" : "Usuario")
+                        .font(.system(.caption, design: .default))
+                        .foregroundColor(.gray)
+                }
+
+                Spacer()
+            }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+
+            Divider()
+                .padding(.horizontal, 16)
+
+            // Logout button
+            Button {
+                showLogoutConfirmation = true
+            } label: {
+                HStack(spacing: 16) {
+                    Image(systemName: "rectangle.portrait.and.arrow.right")
+                        .font(.system(size: 18))
+                        .foregroundColor(.red)
+                        .frame(width: 24, alignment: .center)
+
+                    Text("Cerrar sesión")
+                        .font(.system(.body, design: .default))
+                        .foregroundColor(.red)
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12))
+                        .foregroundColor(.gray)
+                }
+                .contentShape(Rectangle())
+                .padding(.vertical, 12)
+                .padding(.horizontal, 16)
+            }
+        }
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+        )
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+    }
+}
+
+// MARK: - Admin Section
+struct AdminSection: View {
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("Administración")
+                    .font(.system(.headline, design: .default))
+                    .fontWeight(.bold)
+                Spacer()
+                Image(systemName: "shield.fill")
+                    .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+            }
+            .padding(16)
+
+            Divider()
+                .padding(.horizontal, 16)
+
+            NavigationLink {
+                AdminLocationDeleteView()
+            } label: {
+                HStack(spacing: 16) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .font(.system(size: 18))
+                        .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                        .frame(width: 24, alignment: .center)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Gestionar eventos por localidad")
+                            .font(.system(.body, design: .default))
+                            .foregroundColor(.primary)
+                        Text("Eliminar eventos agrupados por ubicación")
+                            .font(.system(.caption, design: .default))
+                            .foregroundColor(.gray)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12))
+                        .foregroundColor(.gray)
+                }
+                .contentShape(Rectangle())
+                .padding(.vertical, 12)
+                .padding(.horizontal, 16)
+            }
+        }
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+        )
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+    }
+}

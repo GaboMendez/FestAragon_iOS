@@ -8,29 +8,38 @@
 import SwiftUI
 
 struct ContentView: View {
+    @ObservedObject private var sessionManager = SessionManager.shared
+
     var body: some View {
-        TabView {
-            HomeView()
-                .tabItem {
-                    Label("Inicio", systemImage: "house.fill")
+        Group {
+            if sessionManager.isLoggedIn {
+                TabView {
+                    HomeView()
+                        .tabItem {
+                            Label("Inicio", systemImage: "house.fill")
+                        }
+
+                    MapsView()
+                        .tabItem {
+                            Label("Mapa", systemImage: "map.fill")
+                        }
+
+                    FavoritesView()
+                        .tabItem {
+                            Label("Favoritos", systemImage: "star.fill")
+                        }
+
+                    ProfileView()
+                        .tabItem {
+                            Label("Perfil", systemImage: "person.fill")
+                        }
                 }
-            
-            MapsView()
-                .tabItem {
-                    Label("Mapa", systemImage: "map.fill")
-                }
-            
-            FavoritesView()
-                .tabItem {
-                    Label("Favoritos", systemImage: "star.fill")
-                }
-            
-            ProfileView()
-                .tabItem {
-                    Label("Perfil", systemImage: "person.fill")
-                }
+                .tint(Color(red: 166/255, green: 47/255, blue: 54/255))
+            } else {
+                RoleSelectionView()
+            }
         }
-        .tint(Color(red: 166/255, green: 47/255, blue: 54/255))
+        .animation(.easeInOut, value: sessionManager.isLoggedIn)
     }
 }
 

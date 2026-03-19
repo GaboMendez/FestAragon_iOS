@@ -61,10 +61,20 @@ class MapsViewModel: ObservableObject {
     init() {
         loadEvents()
         setupSubscriptions()
+        setupAdminChangeObserver()
     }
     
     // MARK: - Private Methods
     
+    private func setupAdminChangeObserver() {
+        NotificationCenter.default.publisher(for: .adminEventDataChanged)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.loadEvents()
+            }
+            .store(in: &cancellables)
+    }
+
     private func syncFavoriteStatus() {
         for index in events.indices {
             events[index].isFavorite = favoritesManager.isFavorite(eventId: events[index].jsonId)
