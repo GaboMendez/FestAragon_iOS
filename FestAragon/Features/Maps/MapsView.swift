@@ -9,6 +9,7 @@ struct MapsView: View {
             span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
         )
     )
+    @State private var showLocalitiesMode = true
     
     var body: some View {
         NavigationStack {
@@ -22,20 +23,41 @@ struct MapsView: View {
                 if !viewModel.showListView {
                     ZStack(alignment: .topTrailing) {
                         Map(position: $mapPosition) {
-                            // Anotaciones de localidades
-                            ForEach(viewModel.availableLocalities, id: \.name) { locality in
-                                Annotation("", coordinate: locality.center) {
-                                    LocalityMapMarker(
-                                        locality: locality.name,
-                                        eventCount: viewModel.eventCountInLocality(locality.name),
-                                        isSelected: viewModel.selectedLocality == locality.name
-                                    )
-                                    .onTapGesture {
-                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                            viewModel.selectLocality(locality.name)
-                                            currentCenter = locality.center
-                                            currentSpan = MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
-                                            mapPosition = .region(MKCoordinateRegion(center: currentCenter, span: currentSpan))
+                            if showLocalitiesMode {
+                                // Anotaciones de localidades
+                                ForEach(viewModel.availableLocalities, id: \.name) { locality in
+                                    Annotation("", coordinate: locality.center) {
+                                        LocalityMapMarker(
+                                            locality: locality.name,
+                                            eventCount: viewModel.eventCountInLocality(locality.name),
+                                            isSelected: viewModel.selectedLocality == locality.name
+                                        )
+                                        .onTapGesture {
+                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                viewModel.selectLocality(locality.name)
+                                                currentCenter = locality.center
+                                                currentSpan = MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                                                mapPosition = .region(MKCoordinateRegion(center: currentCenter, span: currentSpan))
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                // Individual event annotations with category colors
+                                ForEach(viewModel.filteredEvents) { event in
+                                    Annotation("", coordinate: event.coordinate) {
+                                        EventMapMarker(
+                                            category: event.category,
+                                            isSelected: viewModel.selectedEvent?.id == event.id
+                                        )
+                                        .onTapGesture {
+                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                viewModel.selectedEvent = event
+                                                viewModel.deselectLocality()
+                                                currentCenter = event.coordinate
+                                                currentSpan = MKCoordinateSpan(latitudeDelta: 0.015, longitudeDelta: 0.015)
+                                                mapPosition = .region(MKCoordinateRegion(center: currentCenter, span: currentSpan))
+                                            }
                                         }
                                     }
                                 }
@@ -113,6 +135,11 @@ struct MapsView: View {
                 // Content section
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
+                        // Localities toggle - only show in map view
+                        if !viewModel.showListView {
+                            LocalitiesToggle(showLocalitiesMode: $showLocalitiesMode)
+                        }
+                        
                         // Category filters
                         CategoryFiltersSection(
                             categories: EventCategory.allCases,
@@ -185,11 +212,19 @@ struct MapsView: View {
                         
                         // Map Legend - only show in map view
                         if !viewModel.showListView {
-                            MapLegendSection(
-                                categories: EventCategory.allCases,
-                                iconName: viewModel.iconName(for:),
-                                legendTitle: legendTitle(for:)
-                            )
+                            if showLocalitiesMode {
+                                MapLegendSection(
+                                    categories: EventCategory.allCases,
+                                    iconName: viewModel.iconName(for:),
+                                    legendTitle: legendTitle(for:)
+                                )
+                            } else {
+                                MapCategoryLegend(
+                                    categories: EventCategory.allCases,
+                                    iconName: viewModel.iconName(for:),
+                                    legendTitle: legendTitle(for:)
+                                )
+                            }
                         }
                     }
                     .padding(.top, 16)

@@ -460,6 +460,38 @@ struct MapSearchBar: View {
     }
 }
 
+// MARK: - Localities Toggle
+struct LocalitiesToggle: View {
+    @Binding var showLocalitiesMode: Bool
+    
+    private let themeColor = Color.festPrimary
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: showLocalitiesMode ? "map.circle.fill" : "pin.circle.fill")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(themeColor)
+            
+            Text(showLocalitiesMode ? "Agrupar por zonas" : "Todos los eventos")
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(.primary)
+            
+            Spacer()
+            
+            Toggle("", isOn: $showLocalitiesMode)
+                .tint(.festPrimary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 10)
+                .fill(themeColor.opacity(0.08))
+        )
+        .padding(.horizontal)
+    }
+}
+
 // MARK: - Map Legend Section
 struct MapLegendSection: View {
     let categories: [EventCategory]
@@ -674,5 +706,58 @@ struct LocalityEventsCallout: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Color.festPrimary.opacity(0.2), lineWidth: 1)
         )
+    }
+}
+
+// MARK: - Map Category Legend (for individual events mode)
+struct MapCategoryLegend: View {
+    let categories: [EventCategory]
+    let iconName: (EventCategory) -> String
+    let legendTitle: (EventCategory) -> String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Categorías de Eventos")
+                .font(.headline)
+            
+            ForEach(categories, id: \.self) { category in
+                HStack(spacing: 12) {
+                    // Color indicator circle
+                    Circle()
+                        .fill(categoryColor(for: category))
+                        .frame(width: 12, height: 12)
+                    
+                    Image(systemName: iconName(category))
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(categoryColor(for: category))
+                        .frame(width: 20)
+                    
+                    Text(legendTitle(category))
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                }
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.festCardBackground)
+        )
+        .padding(.horizontal)
+    }
+    
+    private func categoryColor(for category: EventCategory) -> Color {
+        switch category {
+        case .music:
+            return Color(red: 0.2, green: 0.4, blue: 0.8)
+        case .cultural:
+            return Color(red: 0.6, green: 0.3, blue: 0.7)
+        case .infantil:
+            return Color(red: 0.2, green: 0.7, blue: 0.5)
+        case .traditional:
+            return Color(red: 0.9, green: 0.5, blue: 0.2)
+        }
     }
 }
