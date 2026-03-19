@@ -6,7 +6,7 @@ struct FavoritesView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(red: 250/255, green: 245/255, blue: 235/255)
+                Color.festBackground
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
@@ -43,7 +43,7 @@ struct FavoritesView: View {
                                     VStack(alignment: .leading, spacing: 12) {
                                         Text("Tus eventos favoritos")
                                             .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                                            .foregroundColor(.festPrimary)
                                             .padding(.horizontal, 16)
                                         
                                         ForEach(viewModel.favoriteEvents) { event in

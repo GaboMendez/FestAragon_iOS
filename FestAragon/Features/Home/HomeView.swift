@@ -12,13 +12,13 @@ struct HomeView: View {
                     HStack {
                         Text("Ver eventos pasados")
                             .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                         
                         Spacer()
                         
                         Toggle("", isOn: $viewModel.showPastEvents)
                             .labelsHidden()
-                            .tint(Color(red: 166/255, green: 47/255, blue: 54/255))
+                            .tint(.festPrimary)
                     }
                     .padding(.horizontal)
                     .padding(.top, 16)
@@ -28,7 +28,7 @@ struct HomeView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255).opacity(0.7))
+                            .foregroundColor(Color.festPrimary.opacity(0.7))
                         
                         TextField("Buscar evento, lugar...", text: $viewModel.searchText)
                             .font(.system(size: 16))
@@ -47,7 +47,7 @@ struct HomeView: View {
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.system(size: 18))
-                                    .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255).opacity(0.6))
+                                    .foregroundColor(Color.festPrimary.opacity(0.6))
                             }
                             .transition(.scale.combined(with: .opacity))
                         }
@@ -56,12 +56,12 @@ struct HomeView: View {
                     .padding(.vertical, 14)
                     .background(
                         RoundedRectangle(cornerRadius: 14)
-                            .fill(Color.white)
+                            .fill(Color.festCardBackground)
                             .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color(red: 166/255, green: 47/255, blue: 54/255).opacity(0.15), lineWidth: 1)
+                            .stroke(Color.festPrimary.opacity(0.15), lineWidth: 1)
                     )
                     .padding(.horizontal)
                     .animation(.easeInOut, value: viewModel.searchText)
@@ -71,7 +71,7 @@ struct HomeView: View {
                         Text("Categorías")
                             .font(.title3)
                             .fontWeight(.semibold)
-                            .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                            .foregroundColor(.festPrimary)
                             .padding(.horizontal)
                         
                         LazyVGrid(columns: [
@@ -97,7 +97,7 @@ struct HomeView: View {
                         Text("Fecha")
                             .font(.title3)
                             .fontWeight(.semibold)
-                            .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                            .foregroundColor(.festPrimary)
                             .padding(.horizontal)
                         
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -122,13 +122,13 @@ struct HomeView: View {
                         Text("Localidades")
                             .font(.title3)
                             .fontWeight(.semibold)
-                            .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                            .foregroundColor(.festPrimary)
                             .padding(.horizontal)
                         
                         if viewModel.availableLocalities.isEmpty {
                             Text("No hay localidades disponibles")
                                 .font(.subheadline)
-                                .foregroundColor(.gray)
+                                .foregroundColor(.secondary)
                                 .padding()
                                 .frame(maxWidth: .infinity)
                         } else {
@@ -156,13 +156,13 @@ struct HomeView: View {
                         Text("Eventos de Hoy")
                             .font(.title3)
                             .fontWeight(.semibold)
-                            .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                            .foregroundColor(.festPrimary)
                             .padding(.horizontal)
                         
                         if viewModel.todayEvents.isEmpty {
                             Text("No hay eventos para hoy")
                                 .font(.subheadline)
-                                .foregroundColor(.gray)
+                                .foregroundColor(.secondary)
                                 .padding()
                                 .frame(maxWidth: .infinity)
                         } else {
@@ -192,7 +192,7 @@ struct HomeView: View {
             }
             .toolbarBackground(Color(red: 166/255, green: 47/255, blue: 54/255), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            .background(Color(red: 250/255, green: 245/255, blue: 235/255))
+            .background(Color.festBackground)
             .navigationDestination(isPresented: $viewModel.showSearchResults) {
                 SearchResultsView(viewModel: viewModel)
             }
@@ -211,14 +211,14 @@ struct CategoryButton: View {
             Text(title)
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(Color(red: 235/255, green: 235/255, blue: 235/255))
+                .background(Color.festChipBackground)
                 .cornerRadius(20)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(isSelected ? Color(red: 166/255, green: 47/255, blue: 54/255) : Color.clear, lineWidth: 2)
+                        .stroke(isSelected ? Color.festPrimary : Color.clear, lineWidth: 2)
                 )
                 .scaleEffect(isSelected ? 1.02 : 1.0)
         }
@@ -243,9 +243,9 @@ struct DateButton: View {
             Text(dayString)
                 .font(.body)
                 .fontWeight(.medium)
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
                 .frame(width: 60, height: 50)
-                .background(isSelected ? Color(red: 200/255, green: 200/255, blue: 200/255) : Color(red: 215/255, green: 215/255, blue: 215/255))
+                .background(isSelected ? Color.festPrimary.opacity(0.2) : Color.festChipBackground)
                 .cornerRadius(8)
                 .scaleEffect(isSelected ? 1.05 : 1.0)
         }
@@ -302,17 +302,17 @@ struct EventCard: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(event.title)
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                             .lineLimit(2)
                             .fixedSize(horizontal: false, vertical: true)
                         
                         Text(formattedDate)
                             .font(.system(size: 14))
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                         
                         Text(event.location)
                             .font(.system(size: 14))
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                             .lineLimit(1)
                     }
                     
@@ -321,7 +321,7 @@ struct EventCard: View {
                     Button(action: onFavorite) {
                         Image(systemName: event.isFavorite ? "star.fill" : "star")
                             .font(.system(size: 24))
-                            .foregroundColor(event.isFavorite ? Color(red: 166/255, green: 47/255, blue: 54/255) : Color.gray.opacity(0.5))
+                            .foregroundColor(event.isFavorite ? Color.festPrimary : Color.gray.opacity(0.5))
                     }
                     .scaleEffect(event.isFavorite ? 1.1 : 1.0)
                     .animation(.spring(response: 0.3, dampingFraction: 0.5), value: event.isFavorite)
@@ -329,7 +329,7 @@ struct EventCard: View {
                 .padding(16)
             }
         }
-        .background(Color.white)
+        .background(Color.festCardBackground)
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
         .padding(.horizontal, 16)
@@ -348,14 +348,14 @@ struct LocalityButton: View {
             Text(title)
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(Color(red: 235/255, green: 235/255, blue: 235/255))
+                .background(Color.festChipBackground)
                 .cornerRadius(20)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
-                        .stroke(isSelected ? Color(red: 166/255, green: 47/255, blue: 54/255) : Color.clear, lineWidth: 2)
+                        .stroke(isSelected ? Color.festPrimary : Color.clear, lineWidth: 2)
                 )
                 .scaleEffect(isSelected ? 1.02 : 1.0)
         }

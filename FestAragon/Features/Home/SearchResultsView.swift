@@ -12,7 +12,7 @@ struct SearchResultsView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Filtros activos:")
                             .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                             .padding(.horizontal)
                         
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -33,7 +33,7 @@ struct SearchResultsView: View {
                                     }
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
-                                    .background(Color(red: 166/255, green: 47/255, blue: 54/255))
+                                    .background(Color.festPrimary)
                                     .cornerRadius(16)
                                 }
                             }
@@ -47,7 +47,7 @@ struct SearchResultsView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "list.bullet.rectangle")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                        .foregroundColor(.festPrimary)
                     
                     Text("\(viewModel.filteredEvents.count) resultado\(viewModel.filteredEvents.count == 1 ? "" : "s")")
                         .font(.subheadline)
@@ -60,7 +60,7 @@ struct SearchResultsView: View {
                 .padding(.vertical, 10)
                 .background(
                     RoundedRectangle(cornerRadius: 10)
-                        .fill(Color.white)
+                        .fill(Color.festCardBackground)
                         .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
                 )
                 .padding(.horizontal)
@@ -70,15 +70,15 @@ struct SearchResultsView: View {
                     VStack(spacing: 16) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 60))
-                            .foregroundColor(.gray.opacity(0.5))
+                            .foregroundColor(.secondary.opacity(0.6))
                         
                         Text("No se encontraron eventos")
                             .font(.headline)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                         
                         Text("Intenta ajustar los filtros de búsqueda")
                             .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity)
@@ -118,7 +118,7 @@ struct SearchResultsView: View {
         }
         .toolbarBackground(Color(red: 166/255, green: 47/255, blue: 54/255), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .background(Color(red: 250/255, green: 245/255, blue: 235/255))
+        .background(Color.festBackground)
     }
 }
 

@@ -151,7 +151,7 @@ struct MapEventCallout: View {
                 NavigationLink(destination: EventView(event: event)) {
                     Image(systemName: "chevron.right.circle.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(themeColor)
+                        .foregroundColor(.festPrimary)
                 }
             }
         }
@@ -382,7 +382,7 @@ struct MapControls: View {
                     .font(.system(size: 16))
                     .foregroundColor(themeColor)
                     .frame(width: 36, height: 36)
-                    .background(Color.white)
+                    .background(Color(.systemBackground))
                     .cornerRadius(8)
                     .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
             }
@@ -407,7 +407,7 @@ struct MapControls: View {
                 }
             }
             .frame(width: 36)
-            .background(Color.white)
+            .background(Color(.systemBackground))
             .cornerRadius(8)
             .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
         }
@@ -447,7 +447,7 @@ struct MapSearchBar: View {
         .padding(.vertical, 14)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color.white)
+                .fill(Color.festCardBackground)
                 .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 2)
         )
         .overlay(
@@ -545,7 +545,7 @@ struct LocalityMapMarker: View {
             ZStack {
                 // Background circle
                 Circle()
-                    .fill(isSelected ? Color(red: 166/255, green: 47/255, blue: 54/255) : Color.white)
+                    .fill(isSelected ? Color.festPrimary : Color(.systemBackground))
                     .frame(width: isSelected ? 50 : 40, height: isSelected ? 50 : 40)
                     .shadow(color: Color(red: 166/255, green: 47/255, blue: 54/255).opacity(0.4), radius: isSelected ? 8 : 4, x: 0, y: 2)
                 
@@ -553,17 +553,17 @@ struct LocalityMapMarker: View {
                 VStack(spacing: 2) {
                     Text("\(eventCount)")
                         .font(.system(size: isSelected ? 18 : 14, weight: .bold))
-                        .foregroundColor(isSelected ? .white : Color(red: 166/255, green: 47/255, blue: 54/255))
+                        .foregroundColor(isSelected ? .white : .festPrimary)
                     
                     Text("evento\(eventCount == 1 ? "" : "s")")
                         .font(.system(size: isSelected ? 8 : 7, weight: .semibold))
-                        .foregroundColor(isSelected ? .white : Color(red: 166/255, green: 47/255, blue: 54/255))
+                        .foregroundColor(isSelected ? .white : .festPrimary)
                 }
             }
             
             // Marker point
             Triangle()
-                .fill(isSelected ? Color(red: 166/255, green: 47/255, blue: 54/255) : Color.white)
+                .fill(isSelected ? Color.festPrimary : Color(.systemBackground))
                 .frame(width: 12, height: 8)
                 .offset(y: -2)
         }

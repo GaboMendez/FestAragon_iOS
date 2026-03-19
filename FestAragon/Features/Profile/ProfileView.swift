@@ -54,7 +54,7 @@ struct ProfileView: View {
             }
             .toolbarBackground(Color(red: 166/255, green: 47/255, blue: 54/255), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            .background(Color(red: 250/255, green: 245/255, blue: 235/255))
+            .background(Color.festBackground)
         }
         .sheet(isPresented: $showingImagePicker) {
             ImagePicker(image: $viewModel.profileImage)

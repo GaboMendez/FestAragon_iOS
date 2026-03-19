@@ -131,7 +131,7 @@ struct MapsView: View {
                                     Image(systemName: viewModel.showListView ? "map" : "list.bullet")
                                         .font(.subheadline)
                                 }
-                                .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                                .foregroundColor(.festPrimary)
                             }
                         }
                         .padding(.horizontal)
@@ -192,7 +192,7 @@ struct MapsView: View {
             }
             .toolbarBackground(Color(red: 166/255, green: 47/255, blue: 54/255), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            .background(Color(red: 250/255, green: 245/255, blue: 235/255))
+            .background(Color.festBackground)
             .navigationDestination(isPresented: Binding(
                 get: { viewModel.selectedLocality != nil },
                 set: { if !$0 { viewModel.deselectLocality() } }

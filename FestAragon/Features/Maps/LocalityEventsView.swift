@@ -17,11 +17,11 @@ struct LocalityEventsView: View {
                                         Text(locality)
                                             .font(.title2)
                                             .fontWeight(.bold)
-                                            .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                                            .foregroundColor(.festPrimary)
                                         
                                         Text("\(viewModel.eventsInSelectedLocality.count) evento\(viewModel.eventsInSelectedLocality.count == 1 ? "" : "s")")
                                             .font(.subheadline)
-                                            .foregroundColor(.gray)
+                                            .foregroundColor(.secondary)
                                     }
                                     
                                     Spacer()
@@ -32,11 +32,11 @@ struct LocalityEventsView: View {
                                     } label: {
                                         Image(systemName: "xmark.circle.fill")
                                             .font(.system(size: 24))
-                                            .foregroundColor(.gray.opacity(0.6))
+                                            .foregroundColor(.secondary.opacity(0.7))
                                     }
                                 }
                                 .padding()
-                                .background(Color.white)
+                                .background(Color.festCardBackground)
                                 .cornerRadius(12)
                                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
                             }
@@ -49,15 +49,15 @@ struct LocalityEventsView: View {
                             VStack(spacing: 16) {
                                 Image(systemName: "calendar.badge.exclamationmark")
                                     .font(.system(size: 50))
-                                    .foregroundColor(.gray.opacity(0.5))
+                                    .foregroundColor(.secondary.opacity(0.6))
                                 
                                 Text("No hay eventos en esta localidad")
                                     .font(.headline)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.secondary)
                                 
                                 Text("Selecciona otra zona para ver sus eventos")
                                     .font(.subheadline)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.secondary)
                                     .multilineTextAlignment(.center)
                             }
                             .frame(maxWidth: .infinity)
@@ -92,7 +92,7 @@ struct LocalityEventsView: View {
             }
             .toolbarBackground(Color(red: 166/255, green: 47/255, blue: 54/255), for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            .background(Color(red: 250/255, green: 245/255, blue: 235/255))
+            .background(Color.festBackground)
         }
     }
 }

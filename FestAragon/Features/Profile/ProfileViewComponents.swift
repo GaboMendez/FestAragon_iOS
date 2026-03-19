@@ -39,7 +39,7 @@ struct EditProfileDialog: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.blue)
+                    .background(Color.festPrimary)
                     .foregroundColor(.white)
                     .cornerRadius(8)
                 }
@@ -155,7 +155,7 @@ struct NotificationsSection: View {
             HStack(spacing: 16) {
                 Image(systemName: "bell.fill")
                     .font(.system(size: 18))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
                     .frame(width: 24, alignment: .center)
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -186,7 +186,7 @@ struct NotificationsSection: View {
                 HStack(spacing: 16) {
                     Image(systemName: "clock.fill")
                         .font(.system(size: 18))
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                         .frame(width: 24, alignment: .center)
                     
                     Text("Tiempo de aviso")
@@ -377,7 +377,7 @@ struct PrivacyPermissionsSection: View {
             HStack(spacing: 16) {
                 Image(systemName: "location.fill")
                     .font(.system(size: 18))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
                     .frame(width: 24, alignment: .center)
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -416,7 +416,7 @@ struct PrivacyPermissionsSection: View {
             HStack(spacing: 16) {
                 Image(systemName: "camera.fill")
                     .font(.system(size: 18))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
                     .frame(width: 24, alignment: .center)
                 
                 Text("Acceso a cámara")
@@ -449,7 +449,7 @@ struct PrivacyPermissionsSection: View {
             HStack(spacing: 16) {
                 Image(systemName: "square.and.arrow.up.fill")
                     .font(.system(size: 18))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
                     .frame(width: 24, alignment: .center)
                 
                 Text("Compartir eventos")
