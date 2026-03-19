@@ -24,37 +24,57 @@ struct AdminLocationDeleteView: View {
             } else {
                 Section {
                     ForEach(viewModel.locations, id: \.name) { location in
-                        Button {
-                            viewModel.requestDelete(
-                                location: location.name,
-                                count: location.count
-                            )
-                        } label: {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(location.name)
-                                        .font(.body)
-                                        .fontWeight(.medium)
-                                        .foregroundColor(.primary)
-                                    Text("\(location.count) evento\(location.count == 1 ? "" : "s")")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                Spacer()
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(location.name)
+                                    .font(.body)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(.primary)
+                                Text("\(location.count) evento\(location.count == 1 ? "" : "s")")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            Spacer()
+
+                            Button {
+                                viewModel.requestEdit(location: location.name)
+                            } label: {
+                                Image(systemName: "pencil")
+                                    .foregroundColor(.festPrimary)
+                            }
+                            .buttonStyle(.plain)
+
+                            Button {
+                                viewModel.requestDelete(
+                                    location: location.name,
+                                    count: location.count
+                                )
+                            } label: {
                                 Image(systemName: "trash")
                                     .foregroundColor(.red)
                             }
+                            .buttonStyle(.plain)
                         }
                     }
                 } header: {
-                    Text("Selecciona una localidad para eliminar todos sus eventos")
+                    Text("Gestiona localidades: editar nombre, añadir nuevas o eliminar con sus eventos")
                 } footer: {
-                    Text("La eliminación es permanente e incluye todos los datos asociados a cada evento.")
+                    Text("La eliminación de una localidad borra permanentemente todos sus eventos y datos asociados.")
                 }
             }
         }
         .navigationTitle("Eventos por Localidad")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    viewModel.requestAdd()
+                } label: {
+                    Image(systemName: "plus")
+                }
+            }
+        }
         .confirmationDialog(
             "Eliminar eventos en '\(viewModel.locationToDelete ?? "")'",
             isPresented: $viewModel.showDeleteConfirmation,
@@ -66,6 +86,24 @@ struct AdminLocationDeleteView: View {
             Button("Cancelar", role: .cancel) {}
         } message: {
             Text("Se eliminarán permanentemente \(viewModel.countToDelete) evento\(viewModel.countToDelete == 1 ? "" : "s") de '\(viewModel.locationToDelete ?? "")' y todos sus datos asociados (multimedia, favoritos, notificaciones). Esta acción no se puede deshacer.")
+        }
+        .alert("Nueva localidad", isPresented: $viewModel.showAddDialog) {
+            TextField("Nombre de la localidad", text: $viewModel.localityInput)
+            Button("Cancelar", role: .cancel) {}
+            Button("Añadir") {
+                viewModel.executeAdd()
+            }
+        } message: {
+            Text("Las localidades añadidas estarán disponibles en el formulario de eventos.")
+        }
+        .alert("Editar localidad", isPresented: $viewModel.showEditDialog) {
+            TextField("Nombre de la localidad", text: $viewModel.localityInput)
+            Button("Cancelar", role: .cancel) {}
+            Button("Guardar") {
+                viewModel.executeEdit()
+            }
+        } message: {
+            Text("Al renombrar, los eventos existentes se actualizarán a la nueva localidad.")
         }
         .alert(viewModel.resultTitle, isPresented: $viewModel.showResult) {
             Button("OK") {}

@@ -4,6 +4,9 @@ import SwiftData
 enum AdminError: LocalizedError {
     case eventNotFound
     case deleteFailed(String)
+    case localityNotFound
+    case invalidLocality
+    case duplicateLocality
 
     var errorDescription: String? {
         switch self {
@@ -11,6 +14,12 @@ enum AdminError: LocalizedError {
             return "No se encontró el evento"
         case .deleteFailed(let reason):
             return "Error al eliminar: \(reason)"
+        case .localityNotFound:
+            return "No se encontró la localidad"
+        case .invalidLocality:
+            return "La localidad seleccionada no es válida"
+        case .duplicateLocality:
+            return "Ya existe una localidad con ese nombre"
         }
     }
 }
@@ -33,6 +42,7 @@ final class EventDataService {
             modelContainer = try ModelContainer(
                 for:
                 TownEntity.self,
+                LocalityEntity.self,
                 CategoryEntity.self,
                 OrganizerEntity.self,
                 EventEntity.self,
@@ -40,6 +50,7 @@ final class EventDataService {
                 configurations: configuration
             )
             seedIfNeeded()
+            syncLocalitiesFromEventsIfNeeded()
         } catch {
             fatalError("Failed to initialize SwiftData container: \(error)")
         }
@@ -141,7 +152,11 @@ final class EventDataService {
         price: Double,
         organizerName: String,
         organizerEmail: String
-    ) -> String {
+    ) throws -> String {
+        guard localityExists(location) else {
+            throw AdminError.invalidLocality
+        }
+
         let newId = UUID().uuidString
         let entity = EventEntity(
             jsonId: newId,
@@ -182,6 +197,10 @@ final class EventDataService {
         organizerName: String,
         organizerEmail: String
     ) throws {
+        guard localityExists(location) else {
+            throw AdminError.invalidLocality
+        }
+
         guard let entity = fetchEventEntity(by: jsonId) else {
             throw AdminError.eventNotFound
         }
@@ -248,12 +267,79 @@ final class EventDataService {
         return count
     }
 
-    func allLocations() -> [(name: String, count: Int)] {
-        let entities = fetchEventEntities()
-        var locationCounts: [String: Int] = [:]
+    func addLocality(_ name: String) throws {
+        let normalized = normalizeLocalityName(name)
+        guard !normalized.isEmpty else {
+            throw AdminError.invalidLocality
+        }
+        guard !localityExists(normalized) else {
+            throw AdminError.duplicateLocality
+        }
+
+        modelContext.insert(LocalityEntity(name: normalized))
+        saveContext()
+    }
+
+    func renameLocality(oldName: String, newName: String) throws {
+        let normalizedOld = normalizeLocalityName(oldName)
+        let normalizedNew = normalizeLocalityName(newName)
+
+        guard !normalizedNew.isEmpty else {
+            throw AdminError.invalidLocality
+        }
+
+        guard let locality = fetchLocalityEntity(byName: normalizedOld) else {
+            throw AdminError.localityNotFound
+        }
+
+        if normalizedOld.caseInsensitiveCompare(normalizedNew) != .orderedSame,
+           localityExists(normalizedNew) {
+            throw AdminError.duplicateLocality
+        }
+
+        let predicate = #Predicate<EventEntity> { entity in
+            entity.location == normalizedOld
+        }
+        let descriptor = FetchDescriptor<EventEntity>(predicate: predicate)
+        let entities = (try? modelContext.fetch(descriptor)) ?? []
         for entity in entities {
+            entity.location = normalizedNew
+        }
+
+        locality.name = normalizedNew
+        saveContext()
+    }
+
+    func deleteLocationAndEvents(_ location: String) throws -> Int {
+        let normalized = normalizeLocalityName(location)
+        let deletedCount = try deleteEventsByLocation(normalized)
+
+        if let locality = fetchLocalityEntity(byName: normalized) {
+            modelContext.delete(locality)
+            saveContext()
+        }
+
+        return deletedCount
+    }
+
+    func allLocalityNames() -> [String] {
+        fetchLocalityEntities()
+            .map(\.name)
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+
+    func allLocations() -> [(name: String, count: Int)] {
+        let events = fetchEventEntities()
+        let localityNames = allLocalityNames()
+        var locationCounts: [String: Int] = [:]
+        for entity in events {
             locationCounts[entity.location, default: 0] += 1
         }
+
+        for localityName in localityNames {
+            locationCounts[localityName, default: 0] += 0
+        }
+
         return locationCounts
             .map { (name: $0.key, count: $0.value) }
             .sorted { $0.name < $1.name }
@@ -288,6 +374,59 @@ final class EventDataService {
         }
     }
 
+    private func fetchLocalityEntities() -> [LocalityEntity] {
+        let descriptor = FetchDescriptor<LocalityEntity>()
+
+        do {
+            return try modelContext.fetch(descriptor)
+        } catch {
+            print("❌ Error fetching localities from SwiftData: \(error)")
+            return []
+        }
+    }
+
+    private func fetchLocalityEntity(byName name: String) -> LocalityEntity? {
+        let predicate = #Predicate<LocalityEntity> { entity in
+            entity.name == name
+        }
+        let descriptor = FetchDescriptor<LocalityEntity>(predicate: predicate)
+
+        do {
+            return try modelContext.fetch(descriptor).first
+        } catch {
+            print("❌ Error fetching locality \(name): \(error)")
+            return nil
+        }
+    }
+
+    private func normalizeLocalityName(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func localityExists(_ name: String) -> Bool {
+        let normalized = normalizeLocalityName(name)
+        guard !normalized.isEmpty else { return false }
+
+        return fetchLocalityEntities().contains {
+            $0.name.caseInsensitiveCompare(normalized) == .orderedSame
+        }
+    }
+
+    private func upsertLocalities(from names: [String]) {
+        let existingNames = Set(fetchLocalityEntities().map { $0.name.lowercased() })
+        let normalizedIncoming = Set(names.map { normalizeLocalityName($0) }.filter { !$0.isEmpty })
+
+        for name in normalizedIncoming where !existingNames.contains(name.lowercased()) {
+            modelContext.insert(LocalityEntity(name: name))
+        }
+    }
+
+    private func syncLocalitiesFromEventsIfNeeded() {
+        let namesFromEvents = fetchEventEntities().map(\.location)
+        upsertLocalities(from: namesFromEvents)
+        saveContext()
+    }
+
     private func syncSeedDataFromBundle() {
         guard let response = loadSeedResponse() else { return }
 
@@ -296,6 +435,7 @@ final class EventDataService {
         let categoriesById = upsertCategories(response.categorias)
         let organizersById = upsertOrganizers(response.organizadores)
         upsertEvents(response.eventos, categoriesById: categoriesById, organizersById: organizersById)
+        upsertLocalities(from: response.eventos.map { $0.lugar.nombre })
 
         saveContext()
     }

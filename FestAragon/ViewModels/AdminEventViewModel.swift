@@ -24,6 +24,7 @@ class AdminEventViewModel: ObservableObject {
     @Published var hasEndDate: Bool
     @Published var category: EventCategory
     @Published var location: String
+    @Published var availableLocalities: [String] = []
     @Published var address: String
     @Published var latitude: String
     @Published var longitude: String
@@ -42,6 +43,8 @@ class AdminEventViewModel: ObservableObject {
 
     // MARK: - Delete Confirmation
     @Published var showDeleteConfirmation = false
+
+    private var cancellables = Set<AnyCancellable>()
 
     var eventJsonId: String {
         switch mode {
@@ -79,6 +82,11 @@ class AdminEventViewModel: ObservableObject {
         self.price = "0.00"
         self.organizerName = ""
         self.organizerEmail = ""
+        self.availableLocalities = EventDataService.shared.allLocalityNames()
+        if let firstLocality = self.availableLocalities.first {
+            self.location = firstLocality
+        }
+        setupObservers()
     }
 
     // MARK: - Init (Edit)
@@ -98,6 +106,12 @@ class AdminEventViewModel: ObservableObject {
         self.price = String(format: "%.2f", event.price)
         self.organizerName = event.organizadorNombre
         self.organizerEmail = event.organizadorEmail
+        self.availableLocalities = EventDataService.shared.allLocalityNames()
+        if !self.availableLocalities.contains(where: { $0.caseInsensitiveCompare(self.location) == .orderedSame }) {
+            self.availableLocalities.append(self.location)
+            self.availableLocalities.sort { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        }
+        setupObservers()
     }
 
     // MARK: - Save
@@ -117,27 +131,27 @@ class AdminEventViewModel: ObservableObject {
         let parsedPrice = Double(price) ?? 0.0
         let finalEndDate: Date? = hasEndDate ? endDate : nil
 
-        if isCreating {
-            EventDataService.shared.createEvent(
-                title: title.trimmingCharacters(in: .whitespaces),
-                description: eventDescription,
-                date: date,
-                endDate: finalEndDate,
-                categoryIdentifier: category.storageIdentifier,
-                location: location.trimmingCharacters(in: .whitespaces),
-                address: address,
-                latitude: lat,
-                longitude: lng,
-                imageURL: imageURL.isEmpty ? nil : imageURL,
-                price: parsedPrice,
-                organizerName: organizerName,
-                organizerEmail: organizerEmail
-            )
-            didSave = true
-            NotificationCenter.default.post(name: .adminEventDataChanged, object: nil)
-            showFeedback(title: "Éxito", message: "El evento se ha creado correctamente.", isError: false)
-        } else {
-            do {
+        do {
+            if isCreating {
+                try EventDataService.shared.createEvent(
+                    title: title.trimmingCharacters(in: .whitespaces),
+                    description: eventDescription,
+                    date: date,
+                    endDate: finalEndDate,
+                    categoryIdentifier: category.storageIdentifier,
+                    location: location.trimmingCharacters(in: .whitespaces),
+                    address: address,
+                    latitude: lat,
+                    longitude: lng,
+                    imageURL: imageURL.isEmpty ? nil : imageURL,
+                    price: parsedPrice,
+                    organizerName: organizerName,
+                    organizerEmail: organizerEmail
+                )
+                didSave = true
+                NotificationCenter.default.post(name: .adminEventDataChanged, object: nil)
+                showFeedback(title: "Éxito", message: "El evento se ha creado correctamente.", isError: false)
+            } else {
                 try EventDataService.shared.updateEvent(
                     jsonId: eventJsonId,
                     title: title.trimmingCharacters(in: .whitespaces),
@@ -157,9 +171,9 @@ class AdminEventViewModel: ObservableObject {
                 didSave = true
                 NotificationCenter.default.post(name: .adminEventDataChanged, object: nil)
                 showFeedback(title: "Éxito", message: "El evento se ha actualizado correctamente.", isError: false)
-            } catch {
-                showFeedback(title: "Error", message: error.localizedDescription, isError: true)
             }
+        } catch {
+            showFeedback(title: "Error", message: error.localizedDescription, isError: true)
         }
     }
 
@@ -192,5 +206,28 @@ class AdminEventViewModel: ObservableObject {
         self.alertMessage = message
         self.isError = isError
         self.showAlert = true
+    }
+
+    private func reloadAvailableLocalities() {
+        let updated = EventDataService.shared.allLocalityNames()
+        availableLocalities = updated
+
+        if availableLocalities.isEmpty {
+            location = ""
+            return
+        }
+
+        if !availableLocalities.contains(where: { $0.caseInsensitiveCompare(location) == .orderedSame }) {
+            location = availableLocalities[0]
+        }
+    }
+
+    private func setupObservers() {
+        NotificationCenter.default.publisher(for: .adminEventDataChanged)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.reloadAvailableLocalities()
+            }
+            .store(in: &cancellables)
     }
 }

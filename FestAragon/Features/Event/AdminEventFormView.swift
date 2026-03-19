@@ -49,7 +49,23 @@ struct AdminEventFormView: View {
 
                 // MARK: - Ubicación
                 Section("Ubicación") {
-                    TextField("Localidad", text: $viewModel.location)
+                    if viewModel.availableLocalities.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("No hay localidades disponibles")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Text("Añade localidades desde el panel de administración de localidades.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    } else {
+                        Picker("Localidad", selection: $viewModel.location) {
+                            ForEach(viewModel.availableLocalities, id: \.self) { locality in
+                                Text(locality).tag(locality)
+                            }
+                        }
+                    }
+
                     TextField("Dirección", text: $viewModel.address)
 
                     HStack {
@@ -98,6 +114,7 @@ struct AdminEventFormView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
                     }
+                    .disabled(viewModel.availableLocalities.isEmpty)
                     .listRowBackground(Color.festPrimary)
                 }
 

@@ -34,6 +34,15 @@ final class TownEntity {
 }
 
 @Model
+final class LocalityEntity {
+    @Attribute(.unique) var name: String
+
+    init(name: String) {
+        self.name = name
+    }
+}
+
+@Model
 final class CategoryEntity {
     @Attribute(.unique) var identifier: String
     var name: String
