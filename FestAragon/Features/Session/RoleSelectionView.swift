@@ -11,12 +11,12 @@ struct RoleSelectionView: View {
             VStack(spacing: 16) {
                 Image(systemName: "party.popper.fill")
                     .font(.system(size: 60))
-                    .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                    .foregroundColor(.festPrimary)
 
                 Text("FestAragón")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                    .foregroundColor(.festPrimary)
 
                 Text("Selecciona tu modo de acceso")
                     .font(.subheadline)
@@ -46,7 +46,7 @@ struct RoleSelectionView: View {
                     .foregroundColor(.white)
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(Color(red: 166/255, green: 47/255, blue: 54/255))
+                    .background(Color.festPrimary)
                     .cornerRadius(14)
                 }
 
@@ -82,7 +82,7 @@ struct RoleSelectionView: View {
             Spacer()
                 .frame(height: 60)
         }
-        .background(Color(red: 250/255, green: 245/255, blue: 235/255))
+        .background(Color.festBackground)
     }
 }
 

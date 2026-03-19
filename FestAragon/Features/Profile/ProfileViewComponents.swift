@@ -235,6 +235,67 @@ struct NotificationsSection: View {
         .padding()
 }
 
+// MARK: - Theme Section
+struct ThemeSection: View {
+    @ObservedObject var viewModel: ProfileViewModel
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("Apariencia")
+                    .font(.system(.headline, design: .default))
+                    .fontWeight(.bold)
+                Spacer()
+            }
+            .padding(16)
+
+            Divider()
+                .padding(.horizontal, 16)
+
+            HStack(spacing: 16) {
+                Image(systemName: viewModel.darkModeEnabled ? "moon.fill" : "sun.max.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(.primary)
+                    .frame(width: 24, alignment: .center)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Tema oscuro")
+                        .font(.system(.body, design: .default))
+                        .foregroundColor(.primary)
+
+                    Text(viewModel.darkModeEnabled ? "Activado" : "Desactivado")
+                        .font(.system(.caption, design: .default))
+                        .foregroundColor(.gray)
+                }
+
+                Spacer()
+
+                Toggle("", isOn: $viewModel.darkModeEnabled)
+                    .labelsHidden()
+                    .tint(.festPrimary)
+                    .onChange(of: viewModel.darkModeEnabled) { _, isEnabled in
+                        viewModel.setDarkModeEnabled(isEnabled)
+                    }
+            }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 16)
+        }
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+        )
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+    }
+}
+
+#Preview {
+    ThemeSection(viewModel: ProfileViewModel())
+        .padding()
+}
+
 // MARK: - Personal Info Section
 struct PersonalInfoSection: View {
     @ObservedObject var viewModel: ProfileViewModel
@@ -394,7 +455,7 @@ struct PrivacyPermissionsSection: View {
                 
                 Toggle("", isOn: $viewModel.locationPermissionGranted)
                     .labelsHidden()
-                    .tint(Color(red: 166/255, green: 47/255, blue: 54/255))
+                    .tint(.festPrimary)
                     .onChange(of: viewModel.locationPermissionGranted) { _, isEnabled in
                         if isEnabled {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -427,7 +488,7 @@ struct PrivacyPermissionsSection: View {
                 
                 Toggle("", isOn: $viewModel.cameraPermissionGranted)
                     .labelsHidden()
-                    .tint(Color(red: 166/255, green: 47/255, blue: 54/255))
+                    .tint(.festPrimary)
                     .onChange(of: viewModel.cameraPermissionGranted) { _, isEnabled in
                         if isEnabled {
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -460,7 +521,7 @@ struct PrivacyPermissionsSection: View {
                 
                 Toggle("", isOn: $viewModel.shareEventsEnabled)
                     .labelsHidden()
-                    .tint(Color(red: 166/255, green: 47/255, blue: 54/255))
+                    .tint(.festPrimary)
                     .onChange(of: viewModel.shareEventsEnabled) { _, newValue in
                         DispatchQueue.main.async {
                             viewModel.saveShareEventsPreference(newValue)
@@ -596,7 +657,7 @@ struct SessionSection: View {
             HStack(spacing: 16) {
                 Image(systemName: currentRole == .admin ? "shield.fill" : "person.fill")
                     .font(.system(size: 18))
-                    .foregroundColor(currentRole == .admin ? Color(red: 166/255, green: 47/255, blue: 54/255) : .blue)
+                    .foregroundColor(currentRole == .admin ? .festPrimary : .primary)
                     .frame(width: 24, alignment: .center)
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -662,7 +723,7 @@ struct AdminSection: View {
                     .fontWeight(.bold)
                 Spacer()
                 Image(systemName: "shield.fill")
-                    .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                    .foregroundColor(.festPrimary)
             }
             .padding(16)
 
@@ -675,7 +736,7 @@ struct AdminSection: View {
                 HStack(spacing: 16) {
                     Image(systemName: "mappin.and.ellipse")
                         .font(.system(size: 18))
-                        .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                        .foregroundColor(.festPrimary)
                         .frame(width: 24, alignment: .center)
 
                     VStack(alignment: .leading, spacing: 4) {

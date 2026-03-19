@@ -63,7 +63,7 @@ struct MapEventCallout: View {
     let onClose: () -> Void
     let onFavoriteToggle: () -> Void
     
-    private let themeColor = Color(red: 166/255, green: 47/255, blue: 54/255)
+    private let themeColor = Color.festPrimary
     
     private var formattedDate: String {
         let formatter = DateFormatter()
@@ -197,7 +197,7 @@ struct CategoryPill: View {
     var isSelected: Bool
     let action: () -> Void
     
-    private let themeColor = Color(red: 166/255, green: 47/255, blue: 54/255)
+    private let themeColor = Color.festPrimary
     
     var body: some View {
         Button(action: action) {
@@ -305,7 +305,7 @@ struct NearbyEventCard: View {
                 Button(action: onMapTap) {
                     Image(systemName: "map.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                        .foregroundColor(.festPrimary)
                 }
             }
         }
@@ -372,7 +372,7 @@ struct MapControls: View {
     let onZoomIn: () -> Void
     let onZoomOut: () -> Void
     
-    private let themeColor = Color(red: 166/255, green: 47/255, blue: 54/255)
+    private let themeColor = Color.festPrimary
     
     var body: some View {
         VStack(spacing: 8) {
@@ -418,7 +418,7 @@ struct MapControls: View {
 struct MapSearchBar: View {
     @Binding var searchText: String
     
-    private let themeColor = Color(red: 166/255, green: 47/255, blue: 54/255)
+    private let themeColor = Color.festPrimary
     
     var body: some View {
         HStack(spacing: 12) {
@@ -496,7 +496,7 @@ struct CategoryFiltersSection: View {
     let onToggle: (EventCategory) -> Void
     let onClear: () -> Void
     
-    private let themeColor = Color(red: 166/255, green: 47/255, blue: 54/255)
+    private let themeColor = Color.festPrimary
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -547,7 +547,7 @@ struct LocalityMapMarker: View {
                 Circle()
                     .fill(isSelected ? Color.festPrimary : Color(.systemBackground))
                     .frame(width: isSelected ? 50 : 40, height: isSelected ? 50 : 40)
-                    .shadow(color: Color(red: 166/255, green: 47/255, blue: 54/255).opacity(0.4), radius: isSelected ? 8 : 4, x: 0, y: 2)
+                    .shadow(color: Color.festPrimary.opacity(0.4), radius: isSelected ? 8 : 4, x: 0, y: 2)
                 
                 // Event count text
                 VStack(spacing: 2) {

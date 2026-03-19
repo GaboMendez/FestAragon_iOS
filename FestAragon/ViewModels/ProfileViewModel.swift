@@ -23,6 +23,7 @@ class ProfileViewModel: NSObject, ObservableObject {
     // Notification settings (observed from centralized manager)
     @Published var eventRemindersEnabled: Bool = false
     @Published var noticeTimeMinutes: Int = 15
+    @Published var darkModeEnabled: Bool = false
     
     // Privacy settings (observed from centralized manager)
     @Published var locationPermissionGranted: Bool = false
@@ -40,6 +41,7 @@ class ProfileViewModel: NSObject, ObservableObject {
     private let userEmailKey = "user_email"
     private let userPhoneKey = "user_phone"
     private let userLocationKey = "user_location"
+    private let darkModeEnabledKey = "is_dark_mode_enabled"
     
     override init() {
         super.init()
@@ -102,6 +104,7 @@ class ProfileViewModel: NSObject, ObservableObject {
         locationPermissionGranted = privacySettings.locationPermissionGranted
         cameraPermissionGranted = privacySettings.cameraPermissionGranted
         shareEventsEnabled = privacySettings.shareEventsEnabled
+        darkModeEnabled = userDefaults.bool(forKey: darkModeEnabledKey)
         
         // Load profile image
         if let imagePath = userDefaults.string(forKey: profileImageKey),
@@ -129,6 +132,11 @@ class ProfileViewModel: NSObject, ObservableObject {
     
     func saveShareEventsPreference(_ enabled: Bool) {
         privacySettings.setShareEventsEnabled(enabled)
+    }
+
+    func setDarkModeEnabled(_ enabled: Bool) {
+        darkModeEnabled = enabled
+        userDefaults.set(enabled, forKey: darkModeEnabledKey)
     }
     
     /// Set notice time in minutes (delegates to centralized manager)

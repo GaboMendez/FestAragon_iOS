@@ -98,7 +98,7 @@ struct AdminEventFormView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
                     }
-                    .listRowBackground(Color(red: 166/255, green: 47/255, blue: 54/255))
+                    .listRowBackground(Color.festPrimary)
                 }
 
                 // MARK: - Eliminar

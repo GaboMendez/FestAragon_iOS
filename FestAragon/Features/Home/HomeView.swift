@@ -208,7 +208,7 @@ struct HomeView: View {
             .sheet(isPresented: $showCreateEventForm) {
                 AdminEventFormView()
             }
-            .toolbarBackground(Color(red: 166/255, green: 47/255, blue: 54/255), for: .navigationBar)
+            .toolbarBackground(Color.festPrimary, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .background(Color.festBackground)
             .navigationDestination(isPresented: $viewModel.showSearchResults) {

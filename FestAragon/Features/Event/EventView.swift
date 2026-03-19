@@ -114,7 +114,7 @@ struct EventView: View {
                             Text("Ver mapa")
                                 .font(.subheadline)
                                 .fontWeight(.bold)
-                                .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                                    .foregroundColor(.festPrimary)
                         }
                     }
                     
@@ -196,7 +196,7 @@ struct EventView: View {
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
-                                .background(Color(red: 166/255, green: 47/255, blue: 54/255))
+                                .background(Color.festPrimary)
                                 .cornerRadius(25)
                             }
                             
@@ -259,7 +259,7 @@ struct EventView: View {
                                 Text("Contactar")
                                     .font(.subheadline)
                                     .fontWeight(.bold)
-                                    .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                                    .foregroundColor(.festPrimary)
                             }
                         }
                     }
@@ -279,7 +279,7 @@ struct EventView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(Color(red: 166/255, green: 47/255, blue: 54/255))
+                        .background(Color.festPrimary)
                         .cornerRadius(12)
                     }
                     
@@ -338,7 +338,7 @@ struct EventView: View {
                             Text(String(format: "%.2f €", viewModel.event.price))
                                 .font(.title3)
                                 .fontWeight(.semibold)
-                                .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                                .foregroundColor(.festPrimary)
                         }
                     }
                 }
@@ -356,7 +356,7 @@ struct EventView: View {
                             showAdminForm = true
                         } label: {
                             Image(systemName: "pencil.circle.fill")
-                                .foregroundColor(Color(red: 166/255, green: 47/255, blue: 54/255))
+                                .foregroundColor(.festPrimary)
                         }
                     }
                     Button {
@@ -435,7 +435,7 @@ struct MediaThumbnailView: View {
                         case .success(let image):
                             image
                                 .resizable()
-                                .aspectRatio(contentMode: .fill)
+                                    .background(Color.festPrimary)
                         case .failure(_):
                             placeholderView
                         case .empty:
@@ -497,8 +497,8 @@ struct MediaThumbnailView: View {
             .overlay(
                 Image(systemName: "play.fill")
                     .font(.title2)
-                    .foregroundColor(.white)
-            )
+                    .foregroundColor(.festPrimary)
+                )
     }
 }
 
