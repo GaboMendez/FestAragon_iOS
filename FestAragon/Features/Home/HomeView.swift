@@ -4,6 +4,7 @@ struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
     private let sessionManager = SessionManager.shared
     @State private var showCreateEventForm = false
+    @State private var isLocalitiesExpanded = false
     @Namespace private var animation
     
     var body: some View {
@@ -121,11 +122,28 @@ struct HomeView: View {
                     
                     // Localidades
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Localidades")
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.festPrimary)
-                            .padding(.horizontal)
+                        HStack {
+                            Text("Localidades")
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.festPrimary)
+
+                            Spacer()
+
+                            if viewModel.availableLocalities.count > 8 {
+                                Button {
+                                    withAnimation(.easeInOut(duration: 0.25)) {
+                                        isLocalitiesExpanded.toggle()
+                                    }
+                                } label: {
+                                    Text(isLocalitiesExpanded ? "Mostrar menos" : "Ver todas")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.festPrimary)
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
                         
                         if viewModel.availableLocalities.isEmpty {
                             Text("No hay localidades disponibles")
@@ -134,22 +152,40 @@ struct HomeView: View {
                                 .padding()
                                 .frame(maxWidth: .infinity)
                         } else {
-                            LazyVGrid(columns: [
-                                GridItem(.flexible()),
-                                GridItem(.flexible())
-                            ], spacing: 12) {
-                                ForEach(viewModel.availableLocalities, id: \.self) { locality in
-                                    LocalityButton(
-                                        title: locality,
-                                        isSelected: viewModel.selectedLocalities.contains(locality)
-                                    ) {
-                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                            viewModel.toggleLocality(locality)
+                            if isLocalitiesExpanded {
+                                LazyVGrid(columns: [
+                                    GridItem(.flexible()),
+                                    GridItem(.flexible())
+                                ], spacing: 12) {
+                                    ForEach(viewModel.availableLocalities, id: \.self) { locality in
+                                        LocalityButton(
+                                            title: locality,
+                                            isSelected: viewModel.selectedLocalities.contains(locality)
+                                        ) {
+                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                viewModel.toggleLocality(locality)
+                                            }
                                         }
                                     }
                                 }
+                                .padding(.horizontal)
+                            } else {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 10) {
+                                        ForEach(Array(viewModel.availableLocalities.prefix(8)), id: \.self) { locality in
+                                            LocalityChip(
+                                                title: locality,
+                                                isSelected: viewModel.selectedLocalities.contains(locality)
+                                            ) {
+                                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                    viewModel.toggleLocality(locality)
+                                                }
+                                            }
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                }
                             }
-                            .padding(.horizontal)
                         }
                     }
                     
@@ -376,6 +412,31 @@ struct LocalityButton: View {
                         .stroke(isSelected ? Color.festPrimary : Color.clear, lineWidth: 2)
                 )
                 .scaleEffect(isSelected ? 1.02 : 1.0)
+        }
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+    }
+}
+
+// MARK: - Locality Chip (compact)
+struct LocalityChip: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(isSelected ? .white : .primary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(isSelected ? Color.festPrimary : Color.festChipBackground)
+                .cornerRadius(18)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18)
+                        .stroke(isSelected ? Color.festPrimary : Color.clear, lineWidth: 1)
+                )
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
     }
