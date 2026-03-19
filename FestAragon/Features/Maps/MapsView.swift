@@ -14,12 +14,12 @@ struct MapsView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Search bar - only show in map view
-                if !viewModel.showListView && viewModel.selectedLocality == nil {
+                if !viewModel.showListView {
                     MapSearchBar(searchText: $viewModel.searchText)
                 }
                 
                 // Map Section - hide when in list view or locality selected
-                if !viewModel.showListView && viewModel.selectedLocality == nil {
+                if !viewModel.showListView {
                     ZStack(alignment: .topTrailing) {
                         Map(position: $mapPosition) {
                             // Anotaciones de localidades
@@ -33,21 +33,9 @@ struct MapsView: View {
                                     .onTapGesture {
                                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                             viewModel.selectLocality(locality.name)
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            // Anotaciones de eventos individuales
-                            ForEach(viewModel.mapEvents) { event in
-                                Annotation("", coordinate: event.coordinate) {
-                                    EventMapMarker(
-                                        category: event.category,
-                                        isSelected: viewModel.selectedEvent?.id == event.id
-                                    )
-                                    .onTapGesture {
-                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                            centerOnEvent(event)
+                                            currentCenter = locality.center
+                                            currentSpan = MKCoordinateSpan(latitudeDelta: 0.02, longitudeDelta: 0.02)
+                                            mapPosition = .region(MKCoordinateRegion(center: currentCenter, span: currentSpan))
                                         }
                                     }
                                 }
@@ -55,9 +43,10 @@ struct MapsView: View {
                         }
                         .frame(height: 280)
                         .onTapGesture {
-                            // Dismiss callout when tapping on map background
+                            // Dismiss callouts when tapping on map background
                             withAnimation(.easeOut(duration: 0.2)) {
                                 viewModel.selectedEvent = nil
+                                viewModel.deselectLocality()
                             }
                         }
                         
@@ -83,15 +72,40 @@ struct MapsView: View {
                             }
                             .frame(height: 280)
                         }
+
+                        // Selected locality callout (reuses map card pattern)
+                        if let selectedLocality = viewModel.selectedLocality {
+                            VStack {
+                                Spacer()
+                                LocalityEventsCallout(
+                                    locality: selectedLocality,
+                                    events: viewModel.eventsInSelectedLocality,
+                                    onClose: {
+                                        withAnimation(.easeOut(duration: 0.2)) {
+                                            viewModel.deselectLocality()
+                                        }
+                                    },
+                                    onFavoriteToggle: { event in
+                                        viewModel.toggleFavorite(event: event)
+                                    }
+                                )
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                                .padding(.horizontal, 12)
+                                .padding(.bottom, 8)
+                            }
+                            .frame(height: 280)
+                        }
                         
-                        // Map controls
-                        MapControls(
-                            onLocationTap: centerOnUserLocation,
-                            onZoomIn: zoomIn,
-                            onZoomOut: zoomOut
-                        )
-                        .padding(.trailing, 12)
-                        .padding(.top, 8)
+                        // Map controls (hide when a callout is visible to avoid blocking close button)
+                        if viewModel.selectedEvent == nil && viewModel.selectedLocality == nil {
+                            MapControls(
+                                onLocationTap: centerOnUserLocation,
+                                onZoomIn: zoomIn,
+                                onZoomOut: zoomOut
+                            )
+                            .padding(.trailing, 12)
+                            .padding(.top, 8)
+                        }
                     }
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
@@ -193,12 +207,6 @@ struct MapsView: View {
             .toolbarBackground(Color.festPrimary, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .background(Color.festBackground)
-            .navigationDestination(isPresented: Binding(
-                get: { viewModel.selectedLocality != nil },
-                set: { if !$0 { viewModel.deselectLocality() } }
-            )) {
-                LocalityEventsView(viewModel: viewModel)
-            }
         }
     }
     
@@ -225,6 +233,7 @@ struct MapsView: View {
     }
     
     private func centerOnEvent(_ event: Event) {
+        viewModel.deselectLocality()
         currentCenter = event.coordinate
         currentSpan = MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
         mapPosition = .region(MKCoordinateRegion(center: currentCenter, span: currentSpan))

@@ -32,9 +32,13 @@ class MapsViewModel: ObservableObject {
     
     /// Todas las localidades únicas disponibles
     var availableLocalities: [(name: String, center: CLLocationCoordinate2D)] {
-        let uniqueLocalities = Set(events.map { $0.location })
+        let uniqueLocalities = Set(filteredEvents.map { $0.location })
         return uniqueLocalities.sorted().map { locality in
-            let eventsInLocality = events.filter { $0.location == locality }
+            let eventsInLocality = filteredEvents.filter { $0.location == locality }
+
+            guard !eventsInLocality.isEmpty else {
+                return (name: locality, center: userLocation.coordinate)
+            }
             
             // Calcular centro de la localidad basado en el promedio de coordenadas de sus eventos
             let avgLat = eventsInLocality.map { $0.latitude }.reduce(0, +) / Double(eventsInLocality.count)
@@ -47,7 +51,7 @@ class MapsViewModel: ObservableObject {
     /// Eventos de la localidad seleccionada
     var eventsInSelectedLocality: [Event] {
         guard let locality = selectedLocality else { return [] }
-        return events.filter { $0.location == locality }
+        return filteredEvents.filter { $0.location == locality }
     }
     
     /// Events sorted by distance from user
@@ -134,6 +138,11 @@ class MapsViewModel: ObservableObject {
         }
         
         filteredEvents = result
+
+        if let selectedLocality,
+           !filteredEvents.contains(where: { $0.location == selectedLocality }) {
+            self.selectedLocality = nil
+        }
     }
     
     private func loadEvents() {
@@ -228,7 +237,7 @@ class MapsViewModel: ObservableObject {
     
     /// Obtener el conteo de eventos en una localidad
     func eventCountInLocality(_ locality: String) -> Int {
-        events.filter { $0.location == locality }.count
+        filteredEvents.filter { $0.location == locality }.count
     }
     
     /// Seleccionar una localidad

@@ -566,8 +566,113 @@ struct LocalityMapMarker: View {
                 .fill(isSelected ? Color.festPrimary : Color(.systemBackground))
                 .frame(width: 12, height: 8)
                 .offset(y: -2)
+
+            Text(locality)
+                .font(.system(size: isSelected ? 11 : 10, weight: .semibold))
+                .lineLimit(1)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(isSelected ? Color.festPrimary : Color(.systemBackground))
+                .foregroundColor(isSelected ? .white : .primary)
+                .clipShape(Capsule())
+                .shadow(color: .black.opacity(0.08), radius: 2, x: 0, y: 1)
+                .offset(y: 1)
         }
         .scaleEffect(isSelected ? 1.2 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
+    }
+}
+
+// MARK: - Locality Events Callout
+struct LocalityEventsCallout: View {
+    let locality: String
+    let events: [Event]
+    let onClose: () -> Void
+    let onFavoriteToggle: (Event) -> Void
+
+    private var sortedEvents: [Event] {
+        events.sorted { $0.date < $1.date }
+    }
+
+    private var headerText: String {
+        "\(events.count) evento\(events.count == 1 ? "" : "s") en \(locality)"
+    }
+
+    var body: some View {
+        VStack(spacing: 10) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(locality)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Text(headerText)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                Button(action: onClose) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            if sortedEvents.isEmpty {
+                Text("No hay eventos en esta localidad")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                ScrollView {
+                    VStack(spacing: 8) {
+                        ForEach(sortedEvents) { event in
+                            NavigationLink(destination: EventView(event: event)) {
+                                HStack(spacing: 10) {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(event.title)
+                                            .font(.subheadline)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.primary)
+                                            .lineLimit(1)
+
+                                        Text(event.timeRange)
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+
+                                    Spacer()
+
+                                    Button {
+                                        onFavoriteToggle(event)
+                                    } label: {
+                                        Image(systemName: event.isFavorite ? "star.fill" : "star")
+                                            .foregroundColor(event.isFavorite ? .yellow : .gray)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 8)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(10)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .frame(maxHeight: 160)
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(.systemBackground))
+                .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.festPrimary.opacity(0.2), lineWidth: 1)
+        )
     }
 }
